@@ -1,0 +1,177 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+warnings=0
+
+have() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+ok() {
+  printf 'OK    %s\n' "$*"
+}
+
+info() {
+  printf 'INFO  %s\n' "$*"
+}
+
+warn() {
+  printf 'WARN  %s\n' "$*"
+  warnings=$((warnings + 1))
+}
+
+service_active() {
+  systemctl is-active "$1" >/dev/null 2>&1
+}
+
+check_mode() {
+  if [[ -d /run/archiso ]]; then
+    warn "running from live ISO; install before using this system as a daily driver"
+  else
+    ok "installed system mode"
+  fi
+}
+
+check_root_fs() {
+  local fstype
+  fstype="$(findmnt -no FSTYPE / 2>/dev/null || true)"
+  if [[ "$fstype" == "btrfs" ]]; then
+    ok "root filesystem is Btrfs"
+  else
+    warn "root filesystem is ${fstype:-unknown}; CinderOS rollback expects Btrfs"
+  fi
+}
+
+check_disk_space() {
+  local usage
+  usage="$(df -P / 2>/dev/null | awk 'NR==2 { gsub("%", "", $5); print $5 }')"
+  if [[ -z "$usage" ]]; then
+    warn "could not read root disk usage"
+  elif (( usage >= 90 )); then
+    warn "root filesystem is ${usage}% full"
+  else
+    ok "root filesystem has usable free space (${usage}% used)"
+  fi
+}
+
+check_snapshots() {
+  if [[ -e /etc/snapper/configs/root ]]; then
+    ok "Snapper root config exists"
+  else
+    warn "Snapper root config is missing; run: sudo cinder-snapshot setup"
+  fi
+
+  if [[ -e /boot/grub/grub.cfg ]] && grep -qiE 'snapper|snapshot' /boot/grub/grub.cfg 2>/dev/null; then
+    ok "GRUB snapshot entries appear to be present"
+  else
+    warn "GRUB snapshot entries were not found; test rollback before daily use"
+  fi
+}
+
+check_boot() {
+  if [[ -e /boot/grub/grub.cfg ]]; then
+    ok "GRUB config exists"
+  else
+    warn "GRUB config was not found at /boot/grub/grub.cfg"
+  fi
+
+  if [[ -e /boot/vmlinuz-linux-zen ]]; then
+    ok "linux-zen kernel is present"
+  else
+    warn "linux-zen kernel was not found in /boot"
+  fi
+
+  if [[ -e /boot/vmlinuz-linux-lts ]] || pacman -Q linux-lts >/dev/null 2>&1; then
+    ok "linux-lts fallback is present"
+  else
+    warn "linux-lts fallback is missing"
+  fi
+
+  if [[ -e /boot/grub/grub.cfg ]] && grep -q 'linux-lts' /boot/grub/grub.cfg 2>/dev/null; then
+    ok "GRUB has a Linux LTS entry"
+  else
+    warn "GRUB does not show a Linux LTS entry; run: sudo grub-mkconfig -o /boot/grub/grub.cfg"
+  fi
+}
+
+check_services() {
+  if service_active ufw.service; then
+    ok "UFW is active"
+  else
+    warn "UFW is not active"
+  fi
+
+  if service_active apparmor.service; then
+    ok "AppArmor service is active"
+  else
+    warn "AppArmor service is not active"
+  fi
+
+  if service_active earlyoom.service; then
+    ok "earlyoom is active"
+  else
+    warn "earlyoom is not active"
+  fi
+}
+
+check_zram() {
+  if swapon --show=NAME 2>/dev/null | grep -q 'zram'; then
+    ok "zram swap is active"
+  else
+    warn "zram swap is not active"
+  fi
+}
+
+check_graphics() {
+  local hardware
+  hardware="$(lspci 2>/dev/null | tr '[:upper:]' '[:lower:]' || true)"
+
+  if grep -Eq 'vga|3d|display' <<<"$hardware"; then
+    grep -Eq 'amd|advanced micro devices|ati' <<<"$hardware" && ok "AMD graphics detected"
+    grep -Eq 'intel' <<<"$hardware" && ok "Intel graphics detected"
+    grep -Eq 'nvidia' <<<"$hardware" && info "NVIDIA graphics detected; test kernel updates, suspend, and Wayland before daily use"
+  else
+    warn "no graphics adapter detected through lspci"
+  fi
+
+  if grep -RqsE '^(nvidia|nvidia_modeset|nvidia_uvm|nvidia_drm)$' /etc/modules-load.d 2>/dev/null; then
+    warn "NVIDIA modules are globally loaded from modules-load.d"
+  else
+    ok "no global NVIDIA module load rule found"
+  fi
+
+  if grep -RqsE '^\s*MODULES=.*nvidia' /etc/mkinitcpio.conf /etc/mkinitcpio.conf.d 2>/dev/null; then
+    warn "NVIDIA modules are globally included in mkinitcpio defaults"
+  else
+    ok "no global NVIDIA mkinitcpio rule found"
+  fi
+}
+
+check_audit_tools() {
+  have pacman && ok "pacman is available" || warn "pacman is not available"
+  have arch-audit && ok "arch-audit is available" || warn "arch-audit is not available"
+}
+
+main() {
+  echo "CinderOS system readiness check"
+  echo
+  check_mode
+  check_root_fs
+  check_disk_space
+  check_boot
+  check_snapshots
+  check_services
+  check_zram
+  check_graphics
+  check_audit_tools
+  echo
+
+  if (( warnings > 0 )); then
+    echo "$warnings warning(s). Fix these before replacing a working OS."
+    exit 1
+  fi
+
+  echo "No warnings. Still test backup and rollback before trusting this install."
+}
+
+main "$@"

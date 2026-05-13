@@ -1,0 +1,13 @@
+[Unit]
+Description=Apply CinderOS hardware-aware environment defaults
+After=systemd-udev-settle.service
+Before=greetd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/cinder-hardware-setup
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+

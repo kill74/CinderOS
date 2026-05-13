@@ -1,0 +1,11 @@
+NAME="CinderOS"
+PRETTY_NAME="CinderOS 1.0.0 Ember"
+ID=cinderos
+ID_LIKE=arch
+BUILD_ID=rolling
+ANSI_COLOR="38;2;224;90;0"
+HOME_URL="file:///usr/share/doc/cinderos/README.md"
+DOCUMENTATION_URL="file:///usr/share/doc/cinderos/README.md"
+SUPPORT_URL="file:///usr/share/doc/cinderos/KNOWN_ISSUES.md"
+BUG_REPORT_URL="file:///usr/share/doc/cinderos/KNOWN_ISSUES.md"
+LOGO=cinderos-logo

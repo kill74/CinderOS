@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=CinderOS Memory
+Comment=View memory and zram settings
+Exec=cinder-control --page memory
+Icon=utilities-system-monitor
+Terminal=false
+Type=Application
+Categories=System;Settings;
+Keywords=CinderOS;memory;ram;zram;earlyoom;low idle;

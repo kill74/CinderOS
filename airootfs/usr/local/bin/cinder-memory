@@ -1,0 +1,157 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cmd="${1:-status}"
+
+need_root() {
+  if [[ "${EUID}" -ne 0 ]]; then
+    exec sudo "$0" "$@"
+  fi
+}
+
+apply_sysctl() {
+  sysctl -w "$1=$2" >/dev/null || true
+}
+
+start_zram() {
+  systemctl daemon-reload || true
+  systemctl start systemd-zram-setup@zram0.service >/dev/null 2>&1 || true
+}
+
+service_line() {
+  service="$1"
+  active="$(systemctl is-active "$service" 2>/dev/null || true)"
+  enabled="$(systemctl is-enabled "$service" 2>/dev/null || true)"
+  printf '  %-32s active=%-10s enabled=%s\n' "$service" "${active:-unknown}" "${enabled:-unknown}"
+}
+
+show_status() {
+  echo "CinderOS memory status"
+  echo
+
+  if command -v free >/dev/null 2>&1; then
+    free -h
+  else
+    awk '/MemTotal|MemAvailable|SwapTotal|SwapFree/ { print }' /proc/meminfo
+  fi
+
+  echo
+  echo "Swap devices:"
+  swapon --show || true
+
+  echo
+  echo "Zram:"
+  if command -v zramctl >/dev/null 2>&1; then
+    zramctl || true
+  else
+    echo "  zramctl is unavailable"
+  fi
+
+  echo
+  echo "Memory pressure:"
+  if [[ -r /proc/pressure/memory ]]; then
+    sed 's/^/  /' /proc/pressure/memory
+  else
+    echo "  PSI memory pressure is unavailable"
+  fi
+
+  echo
+  echo "Low-idle services:"
+  service_line earlyoom.service
+  service_line docker.service
+  service_line cups.service
+  service_line bluetooth.service
+  service_line fwupd.service
+  service_line sshd.service
+  service_line usbguard.service
+  service_line clamav-daemon.service
+  service_line fail2ban.service
+  service_line snapper-timeline.timer
+  service_line btrfsmaintenance-refresh.path
+}
+
+low_idle() {
+  need_root "$@"
+  apply_sysctl vm.swappiness 120
+  apply_sysctl vm.page-cluster 0
+  apply_sysctl vm.vfs_cache_pressure 50
+  apply_sysctl vm.dirty_background_ratio 5
+  apply_sysctl vm.dirty_ratio 20
+  start_zram
+  systemctl enable --now earlyoom.service >/dev/null 2>&1 || true
+  systemctl disable --now docker.service cups.service bluetooth.service fwupd.service systemd-oomd.service sshd.service usbguard.service clamav-daemon.service clamav-freshclam.service fail2ban.service >/dev/null 2>&1 || true
+  systemctl disable --now cinder-snapshot-setup.service snapper-timeline.timer snapper-cleanup.timer snapper-boot.timer grub-btrfsd.service btrfsmaintenance-refresh.path btrfs-scrub@-.timer >/dev/null 2>&1 || true
+  echo "CinderOS memory profile: low-idle"
+}
+
+gaming() {
+  need_root "$@"
+  apply_sysctl vm.swappiness 100
+  apply_sysctl vm.page-cluster 0
+  apply_sysctl vm.vfs_cache_pressure 50
+  apply_sysctl vm.dirty_background_ratio 5
+  apply_sysctl vm.dirty_ratio 20
+  apply_sysctl vm.max_map_count 2147483642
+  start_zram
+  systemctl enable --now earlyoom.service >/dev/null 2>&1 || true
+  echo "CinderOS memory profile: gaming"
+}
+
+dev() {
+  need_root "$@"
+  apply_sysctl vm.swappiness 120
+  apply_sysctl vm.page-cluster 0
+  apply_sysctl vm.vfs_cache_pressure 60
+  apply_sysctl vm.dirty_background_ratio 10
+  apply_sysctl vm.dirty_ratio 30
+  start_zram
+  systemctl enable --now earlyoom.service >/dev/null 2>&1 || true
+  echo "CinderOS memory profile: dev"
+}
+
+explain() {
+  cat <<'MESSAGE'
+CinderOS low-idle memory model
+
+- zram gives compressed swap in RAM and only consumes real memory as pages are used.
+- high swappiness is intentional with zram: cold pages move into compressed RAM sooner.
+- page-cluster=0 reduces swap-in bursts, which helps desktop responsiveness.
+- earlyoom acts before the kernel OOM path freezes the desktop.
+- Docker, printing, Bluetooth, fwupd, Flatpak setup, and snapshot timers stay opt-in.
+- /tmp is not tmpfs by default, because downloads, builds, and game files can waste RAM.
+MESSAGE
+}
+
+run_test() {
+  if ! command -v stress-ng >/dev/null 2>&1; then
+    echo "stress-ng is not installed." >&2
+    exit 1
+  fi
+
+  stress-ng --vm 1 --vm-bytes 70% --timeout 30s --metrics-brief
+}
+
+case "$cmd" in
+  status)
+    show_status
+    ;;
+  low-idle|balanced)
+    low_idle "$@"
+    ;;
+  gaming|performance)
+    gaming "$@"
+    ;;
+  dev)
+    dev "$@"
+    ;;
+  explain)
+    explain
+    ;;
+  test)
+    run_test
+    ;;
+  *)
+    echo "Usage: cinder-memory [status|low-idle|gaming|dev|explain|test]" >&2
+    exit 2
+    ;;
+esac

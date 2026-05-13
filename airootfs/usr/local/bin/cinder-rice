@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cmd="${1:-status}"
+quiet=0
+if [[ "${2:-}" == "--quiet" || "${1:-}" == "--quiet" ]]; then
+  quiet=1
+fi
+
+rice_name="polished-pixel-ember"
+display_name="ember"
+wallpaper="/usr/share/backgrounds/cinderos/default.jpg"
+wallpaper_svg="/usr/share/backgrounds/cinderos/default.svg"
+cosmic_dir="${HOME}/.config/cosmic/com.system76.CosmicBackground/v1"
+rice_state="${HOME}/.config/cinderos/rice"
+
+managed_files=(
+  ".config/kitty/kitty.conf"
+  ".config/starship.toml"
+  ".config/fastfetch/config.jsonc"
+  ".config/btop/btop.conf"
+  ".config/btop/themes/cinderos_ember.theme"
+  ".config/gtk-3.0/settings.ini"
+  ".config/gtk-4.0/settings.ini"
+  ".zshrc"
+  ".bashrc"
+)
+
+say() {
+  if [[ "$quiet" -ne 1 ]]; then
+    printf '%s\n' "$*"
+  fi
+}
+
+backup_file() {
+  local rel="$1"
+  local src="${HOME}/${rel}"
+  local backup="${rice_state}/backup/${rel}"
+
+  if [[ -e "$src" && ! -e "$backup" ]]; then
+    install -d "$(dirname "$backup")"
+    cp -a "$src" "$backup"
+  fi
+}
+
+install_skel_file() {
+  local rel="$1"
+  local src="/etc/skel/${rel}"
+  local dest="${HOME}/${rel}"
+
+  if [[ ! -f "$src" ]]; then
+    say "Missing rice source: $src"
+    return 1
+  fi
+
+  backup_file "$rel"
+  install -d "$(dirname "$dest")"
+  cp -a "$src" "$dest"
+}
+
+write_cosmic_wallpaper() {
+  install -d "$cosmic_dir"
+  if [[ -f "$cosmic_dir/all" && ! -f "$rice_state/backup/cosmic-background-all" ]]; then
+    install -d "$rice_state/backup"
+    cp -a "$cosmic_dir/all" "$rice_state/backup/cosmic-background-all"
+  fi
+
+  cat > "$cosmic_dir/all" <<EOF
+(
+    output: "all",
+    source: Path("$wallpaper"),
+    filter_by_theme: false,
+    rotation_frequency: 0,
+    filter_method: Nearest,
+    scaling_mode: Zoom,
+    sampling_method: Alphanumeric,
+)
+EOF
+  printf '[All]\n' > "$cosmic_dir/backgrounds"
+}
+
+status() {
+  echo "CinderOS appearance status"
+  echo "  profile: $display_name"
+  echo "  wallpaper: $wallpaper"
+  [[ -f "$wallpaper" ]] && echo "  wallpaper file: present" || echo "  wallpaper file: missing"
+  [[ -f "$wallpaper_svg" ]] && echo "  wallpaper svg: present" || echo "  wallpaper svg: missing"
+  [[ -f "$cosmic_dir/all" ]] && grep -Fq "$wallpaper" "$cosmic_dir/all" && echo "  COSMIC wallpaper: applied" || echo "  COSMIC wallpaper: not applied"
+  [[ -f "${HOME}/.config/kitty/kitty.conf" ]] && grep -Fq '#151515' "${HOME}/.config/kitty/kitty.conf" && echo "  kitty palette: applied" || echo "  kitty palette: unknown"
+  [[ -f "${HOME}/.config/starship.toml" ]] && grep -Fq 'palette = "cinder"' "${HOME}/.config/starship.toml" && echo "  starship palette: applied" || echo "  starship palette: unknown"
+}
+
+apply_rice() {
+  install -d "$rice_state"
+  for rel in "${managed_files[@]}"; do
+    install_skel_file "$rel"
+  done
+  write_cosmic_wallpaper
+  printf '%s\n' "$rice_name" > "$rice_state/profile"
+  say "CinderOS appearance applied."
+}
+
+reset_rice() {
+  local rel backup dest
+  for rel in "${managed_files[@]}"; do
+    backup="${rice_state}/backup/${rel}"
+    dest="${HOME}/${rel}"
+    if [[ -e "$backup" ]]; then
+      install -d "$(dirname "$dest")"
+      cp -a "$backup" "$dest"
+    fi
+  done
+
+  if [[ -f "$rice_state/backup/cosmic-background-all" ]]; then
+    install -d "$cosmic_dir"
+    cp -a "$rice_state/backup/cosmic-background-all" "$cosmic_dir/all"
+  else
+    rm -f "$cosmic_dir/all" "$cosmic_dir/backgrounds"
+  fi
+
+  rm -f "$rice_state/profile"
+  say "CinderOS appearance reset for this user."
+}
+
+explain() {
+  cat <<'MESSAGE'
+CinderOS appearance profile
+
+- Graphite grey keeps the desktop readable.
+- Orange is used for active controls, terminal cursor, prompt accents, and boot highlights.
+- Wallpaper and boot assets are shipped with the ISO.
+- COSMIC gets the full appearance profile; XFCE Lite keeps shared GTK and icon defaults.
+- cinder-rice apply writes user-level dotfiles and COSMIC wallpaper config, with backups under ~/.config/cinderos/rice/backup.
+MESSAGE
+}
+
+case "$cmd" in
+  status)
+    status
+    ;;
+  apply)
+    apply_rice
+    ;;
+  reset)
+    reset_rice
+    ;;
+  explain)
+    explain
+    ;;
+  *)
+    echo "Usage: cinder-rice [status|apply|reset|explain] [--quiet]" >&2
+    exit 2
+    ;;
+esac

@@ -1,0 +1,8 @@
+GRUB_DEFAULT=0
+GRUB_TIMEOUT=5
+GRUB_DISTRIBUTOR="CinderOS"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash amd_pstate=active mitigations=auto threadirqs nohz=on rcu_nocbs=all nowatchdog lsm=landlock,lockdown,yama,integrity,apparmor,bpf audit=1"
+GRUB_CMDLINE_LINUX=""
+GRUB_DISABLE_OS_PROBER=false
+GRUB_GFXMODE=auto
+GRUB_THEME="/usr/share/grub/themes/cinderos/theme.txt"

@@ -1,0 +1,13 @@
+# AUR packages from the CinderOS spec.
+# Build these in a clean chroot and expose them through a custom repo, or
+# install them after the system is installed with paru.
+
+paru
+bibata-cursor-theme-bin
+visual-studio-code-bin
+zed
+helium-browser
+opencode-bin
+proton-ge-custom
+bottles
+heroic-games-launcher-bin

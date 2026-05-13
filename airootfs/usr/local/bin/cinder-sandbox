@@ -1,0 +1,163 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+have() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+first_existing_command() {
+  local name
+  for name in "$@"; do
+    if have "$name"; then
+      printf '%s\n' "$name"
+      return 0
+    fi
+  done
+  return 1
+}
+
+run_isolated() {
+  if [[ "$#" -eq 0 ]]; then
+    echo "No command provided." >&2
+    exit 2
+  fi
+
+  if have firejail; then
+    exec firejail --private-cache -- "$@"
+  fi
+
+  if have bwrap; then
+    exec bwrap \
+      --unshare-pid \
+      --unshare-ipc \
+      --die-with-parent \
+      --ro-bind /usr /usr \
+      --ro-bind /etc /etc \
+      --dev-bind /dev /dev \
+      --proc /proc \
+      --tmpfs /tmp \
+      --bind "$HOME" "$HOME" \
+      --chdir "$PWD" \
+      -- "$@"
+  fi
+
+  echo "No sandbox backend found. Install firejail or bubblewrap." >&2
+  exit 1
+}
+
+run_gui_app() {
+  if [[ "$#" -eq 0 ]]; then
+    echo "No GUI command provided." >&2
+    exit 2
+  fi
+
+  if have firejail; then
+    exec firejail --private-cache -- "$@"
+  fi
+
+  echo "Firejail is required for GUI app sandbox profiles." >&2
+  echo "Bubblewrap fallback is intentionally limited to cinder-sandbox run/untrusted." >&2
+  exit 1
+}
+
+run_untrusted() {
+  if [[ "$#" -eq 0 ]]; then
+    echo "No command provided for the untrusted sandbox." >&2
+    exit 2
+  fi
+
+  local private_home="${HOME}/Downloads/cinder-sandbox-home"
+  mkdir -p "$private_home"
+
+  if have firejail; then
+    exec firejail --private="$private_home" --private-cache --net=none -- "$@"
+  fi
+
+  if have bwrap; then
+    exec bwrap \
+      --unshare-all \
+      --die-with-parent \
+      --ro-bind /usr /usr \
+      --ro-bind /etc /etc \
+      --dev /dev \
+      --proc /proc \
+      --tmpfs /tmp \
+      --bind "$private_home" "$HOME" \
+      --chdir "$HOME" \
+      -- "$@"
+  fi
+
+  echo "No sandbox backend found. Install firejail or bubblewrap." >&2
+  exit 1
+}
+
+browser() {
+  local browser_cmd
+  browser_cmd="$(first_existing_command "${BROWSER:-}" helium firefox chromium brave vivaldi google-chrome 2>/dev/null || true)"
+  if [[ -z "$browser_cmd" ]]; then
+    echo "No browser command found." >&2
+    exit 1
+  fi
+  run_gui_app "$browser_cmd" "$@"
+}
+
+discord() {
+  if ! have discord; then
+    echo "discord is not installed." >&2
+    exit 1
+  fi
+  run_gui_app discord "$@"
+}
+
+steam() {
+  if ! have steam; then
+    echo "steam is not installed." >&2
+    exit 1
+  fi
+  run_gui_app steam "$@"
+}
+
+list_profiles() {
+  cat <<'MESSAGE'
+CinderOS sandbox helpers
+
+  cinder-sandbox browser [args]        Run detected browser through Firejail profiles
+  cinder-sandbox discord [args]        Run Discord through Firejail profiles
+  cinder-sandbox steam [args]          Run Steam through Firejail profiles
+  cinder-sandbox run command [args]    Run a CLI command in an opt-in sandbox
+  cinder-sandbox untrusted command     Run a download/test app with private home and no network
+
+Firejail is required for GUI application profiles. Bubblewrap fallback is limited
+to CLI/test commands because generic GUI bind-mounts are easy to get wrong.
+MESSAGE
+}
+
+case "${1:-list}" in
+  list|status)
+    list_profiles
+    ;;
+  browser)
+    shift
+    browser "$@"
+    ;;
+  discord)
+    shift
+    discord "$@"
+    ;;
+  steam|steam-tools)
+    shift
+    steam "$@"
+    ;;
+  run)
+    shift
+    run_isolated "$@"
+    ;;
+  untrusted|downloads|test)
+    shift
+    run_untrusted "$@"
+    ;;
+  *)
+    echo "Usage: cinder-sandbox [list|browser|discord|steam|run|untrusted] ..." >&2
+    exit 2
+    ;;
+esac

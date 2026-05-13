@@ -1,0 +1,43 @@
+title-text: "CinderOS"
+title-font: "Unifont Regular 24"
+title-color: "#ff9f3f"
+desktop-image: "background.jpg"
+desktop-color: "#151515"
+terminal-font: "Unifont Regular 16"
+
++ boot_menu {
+  left = 10%
+  top = 28%
+  width = 80%
+  height = 45%
+  item_font = "Unifont Regular 18"
+  item_color = "#f2e7d5"
+  selected_item_color = "#ff9f3f"
+  icon_width = 32
+  icon_height = 32
+  item_height = 34
+  item_padding = 8
+  item_spacing = 6
+}
+
++ label {
+  left = 10%
+  top = 82%
+  width = 80%
+  height = 32
+  text = "Select a boot option"
+  align = "center"
+  font = "Unifont Regular 16"
+  color = "#ff9f3f"
+}
+
++ progress_bar {
+  left = 20%
+  top = 88%
+  width = 60%
+  height = 10
+  id = "__timeout__"
+  fg_color = "#ff7a1a"
+  bg_color = "#242424"
+  border_color = "#ff9f3f"
+}

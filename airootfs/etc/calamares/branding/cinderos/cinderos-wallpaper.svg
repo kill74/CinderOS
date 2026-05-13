@@ -1,0 +1,26 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 640" preserveAspectRatio="xMidYMid slice" shape-rendering="crispEdges">
+  <rect width="980" height="640" fill="#151515"/>
+  <rect x="0" y="428" width="980" height="212" fill="#101010"/>
+  <g fill="#242424">
+    <rect x="72" y="368" width="72" height="60"/>
+    <rect x="172" y="320" width="96" height="108"/>
+    <rect x="304" y="356" width="84" height="72"/>
+    <rect x="436" y="284" width="120" height="144"/>
+    <rect x="604" y="344" width="84" height="84"/>
+    <rect x="736" y="308" width="108" height="120"/>
+  </g>
+  <g fill="#ff7a1a">
+    <rect x="196" y="344" width="12" height="12"/>
+    <rect x="472" y="308" width="12" height="12"/>
+    <rect x="760" y="332" width="12" height="12"/>
+    <rect x="386" y="124" width="208" height="16"/>
+    <rect x="386" y="124" width="16" height="154"/>
+    <rect x="578" y="124" width="16" height="154"/>
+    <rect x="386" y="262" width="208" height="16"/>
+  </g>
+  <rect x="424" y="154" width="132" height="74" fill="#242424"/>
+  <rect x="448" y="172" width="84" height="14" fill="#ff9f3f"/>
+  <rect x="462" y="196" width="56" height="14" fill="#8a8a8a"/>
+  <text x="490" y="350" fill="#f2e7d5" font-family="monospace" font-size="30" text-anchor="middle" letter-spacing="3">CINDEROS</text>
+  <text x="490" y="386" fill="#ff9f3f" font-family="monospace" font-size="16" text-anchor="middle" letter-spacing="4">EMBER</text>
+</svg>

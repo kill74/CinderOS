@@ -1,0 +1,47 @@
+Window.SetBackgroundTopColor(0.08, 0.08, 0.08);
+Window.SetBackgroundBottomColor(0.06, 0.06, 0.06);
+
+screen_width = Window.GetWidth();
+screen_height = Window.GetHeight();
+
+title = Image.Text("CinderOS", 1.0, 0.48, 0.10);
+subtitle = Image.Text("Ember", 0.95, 0.91, 0.84);
+prompt = Image.Text("starting workstation profile", 1.0, 0.62, 0.25);
+
+title_sprite = Sprite(title);
+subtitle_sprite = Sprite(subtitle);
+prompt_sprite = Sprite(prompt);
+
+title_sprite.SetX(screen_width / 2 - title.GetWidth() / 2);
+title_sprite.SetY(screen_height / 2 - 80);
+subtitle_sprite.SetX(screen_width / 2 - subtitle.GetWidth() / 2);
+subtitle_sprite.SetY(screen_height / 2 - 28);
+prompt_sprite.SetX(screen_width / 2 - prompt.GetWidth() / 2);
+prompt_sprite.SetY(screen_height / 2 + 30);
+
+bar_width = 420;
+bar_height = 6;
+bar_x = screen_width / 2 - bar_width / 2;
+bar_y = screen_height / 2 + 78;
+
+progress_box = Image(bar_width, bar_height);
+progress_box.Fill(0.16, 0.16, 0.16, 1.0);
+progress_box_sprite = Sprite(progress_box);
+progress_box_sprite.SetX(bar_x);
+progress_box_sprite.SetY(bar_y);
+
+fun refresh_callback() {
+  progress = Plymouth.GetBootProgress();
+  fill_width = Math.Int(bar_width * progress);
+  if (fill_width < 12) {
+    fill_width = 12;
+  }
+
+  progress_bar = Image(fill_width, bar_height);
+  progress_bar.Fill(1.0, 0.48, 0.10, 1.0);
+  progress_bar_sprite = Sprite(progress_bar);
+  progress_bar_sprite.SetX(bar_x);
+  progress_bar_sprite.SetY(bar_y);
+}
+
+Plymouth.SetRefreshFunction(refresh_callback);

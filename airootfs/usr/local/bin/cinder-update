@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+args=("$@")
+make_snapshot=1
+rebuild_grub=1
+
+usage() {
+  cat >&2 <<'MESSAGE'
+Usage: cinder-update [--no-snapshot] [--no-grub]
+
+Runs a normal pacman update with a pre-update snapshot when Snapper is configured.
+MESSAGE
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --no-snapshot)
+      make_snapshot=0
+      ;;
+    --no-grub)
+      rebuild_grub=0
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      usage
+      exit 2
+      ;;
+  esac
+  shift
+done
+
+if [[ -d /run/archiso ]]; then
+  echo "Refusing to update the live ISO session. Install CinderOS first." >&2
+  exit 1
+fi
+
+if [[ "${EUID}" -ne 0 ]]; then
+  exec sudo "$0" "${args[@]}"
+fi
+
+if ! command -v pacman >/dev/null 2>&1; then
+  echo "pacman is not available." >&2
+  exit 1
+fi
+
+echo "CinderOS update"
+echo
+
+if [[ "$make_snapshot" -eq 1 ]]; then
+  if [[ -e /etc/snapper/configs/root ]] && command -v snapper >/dev/null 2>&1; then
+    snapper -c root create --description "Pre-update snapshot $(date +%Y-%m-%d)" --userdata "important=yes" || true
+    echo "Pre-update snapshot requested."
+  else
+    echo "Snapper is not configured; continuing without a pre-update snapshot."
+    echo "Run before daily use: sudo cinder-snapshot setup"
+  fi
+fi
+
+pacman -Syu
+
+if command -v arch-audit >/dev/null 2>&1; then
+  echo
+  echo "Package audit:"
+  arch-audit --upgradable || true
+fi
+
+if [[ "$rebuild_grub" -eq 1 && -e /boot/grub/grub.cfg ]] && command -v grub-mkconfig >/dev/null 2>&1; then
+  echo
+  grub-mkconfig -o /boot/grub/grub.cfg || true
+fi
+
+echo
+if command -v cinder-doctor >/dev/null 2>&1; then
+  cinder-doctor || true
+fi
+
+cat <<'MESSAGE'
+
+Update complete.
+Before rebooting after major kernel, graphics, or bootloader updates:
+  - confirm linux-lts is installed
+  - confirm snapshots are listed with: cinder-snapshot list
+  - keep a live USB nearby until the reboot succeeds
+MESSAGE

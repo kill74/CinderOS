@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=CinderOS Settings
+Comment=System setup and maintenance
+Exec=cinder-control
+Icon=cinderos-logo
+Terminal=false
+Type=Application
+Categories=Settings;System;
+Keywords=CinderOS;settings;backups;games;installer;

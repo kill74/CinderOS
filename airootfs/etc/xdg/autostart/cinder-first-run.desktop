@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=CinderOS First Run
+Comment=Open the CinderOS Start page on first login
+Exec=cinder-first-run
+Icon=cinderos-logo
+Terminal=false
+Type=Application
+OnlyShowIn=COSMIC;
+X-GNOME-Autostart-enabled=true

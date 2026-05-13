@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=CinderOS Start
+Comment=Open the CinderOS Start page
+Exec=cinder-control --page welcome
+Icon=cinderos-logo
+Terminal=false
+Type=Application
+Categories=System;

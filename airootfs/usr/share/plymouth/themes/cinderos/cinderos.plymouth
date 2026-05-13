@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=CinderOS
+Description=CinderOS boot splash
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/cinderos
+ScriptFile=/usr/share/plymouth/themes/cinderos/cinderos.script

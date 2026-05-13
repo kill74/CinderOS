@@ -1,0 +1,21 @@
+# ArchISO build output and temporary work dirs
+work/
+out/
+*.iso
+*.img
+*.qcow2
+
+# Local package repo output
+cinderos-aur-repo/
+*.pkg.tar.zst
+*.pkg.tar.zst.sig
+*.db
+*.db.tar.gz
+*.files
+*.files.tar.gz
+
+# Editor and OS noise
+.DS_Store
+Thumbs.db
+*.swp
+

@@ -1,0 +1,167 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cmd="${1:-start}"
+
+is_live=0
+if [[ -d /run/archiso || -x /usr/local/bin/cinder-install ]]; then
+  is_live=1
+fi
+
+pause_if_terminal() {
+  if [[ -t 0 ]]; then
+    printf '\nPress Enter to close... '
+    read -r _ || true
+  fi
+}
+
+show_header() {
+  cat <<'MESSAGE'
+================================================================
+ CinderOS 1.0.0 Ember
+================================================================
+MESSAGE
+}
+
+show_start() {
+  show_header
+
+  if [[ "$is_live" -eq 1 ]]; then
+    cat <<'MESSAGE'
+
+ Start here:
+   cinder-control --page welcome   Open the Start page
+   cinder-install                  Open the installer
+   cinder-welcome commands         Show the full command reference
+
+ Good first checks:
+   cinder-hardware-setup           Check graphics hardware
+   cinder-memory status            Show RAM, zram, swap, pressure
+   cinder-security status          Show firewall, AppArmor, disk, updates
+MESSAGE
+  else
+    cat <<'MESSAGE'
+
+ Start here:
+   cinder-control --page welcome   Open the Start page
+   cinder-welcome commands         Show the full command reference
+
+ Good first steps:
+   cinder-rice apply               Apply appearance defaults
+   cinder-doctor                   Check installed system readiness
+   cinder-hardware-setup           Check graphics hardware
+   cinder-memory low-idle          Apply memory defaults
+   cinder-snapshot setup           Set up backups
+   sudo cinder-update              Update with snapshot support
+   cinder-security status          Show firewall, AppArmor, disk, updates
+MESSAGE
+  fi
+
+  cat <<'MESSAGE'
+
+ Desktop defaults:
+   COSMIC Wayland by default, XFCE Lite optional
+   zram + earlyoom memory profile
+   Steam, Wine, GameMode, MangoHud, Vulkan tooling
+   Firewall and AppArmor enabled
+
+================================================================
+MESSAGE
+}
+
+show_commands() {
+  show_header
+
+  if [[ "$is_live" -eq 1 ]]; then
+    cat <<'MESSAGE'
+
+ Live session:
+   cinder-install                  Open the installer
+   sudo calamares                  Open Calamares directly
+MESSAGE
+  fi
+
+  cat <<'MESSAGE'
+
+ Control center:
+   cinder-control --page welcome   Open the Start page
+   cinder-control --page status    Open system status
+   cinder-control --page appearance  Open appearance settings
+   cinder-control --page memory    Open memory settings
+   cinder-control --page security  Open security settings
+   cinder-control --page backups   Open backup settings
+
+ Memory and sessions:
+   cinder-rice status              Show appearance status
+   cinder-rice apply               Apply appearance defaults
+   cinder-memory status            Show RAM, zram, swap, pressure
+   cinder-memory low-idle          Apply memory defaults
+   cinder-memory gaming            Apply game memory settings
+   cinder-session-mode status      Show COSMIC/Lite login default
+   cinder-session-mode lite        Use XFCE Lite by default
+   cinder-session-mode cosmic      Use COSMIC by default
+
+ Tuning:
+   cinder-tune performance         Set performance profile
+   cinder-tune balanced            Set default profile
+   cinder-tune quiet               Set quiet profile
+   cinder-tune status              Show current power profile
+
+ Hardware and recovery:
+   cinder-hardware-setup           Check graphics hardware
+   cinder-doctor                   Check installed system readiness
+   sudo cinder-update              Update with snapshot support
+   cinder-snapshot setup           Set up Snapper and grub-btrfs
+   cinder-snapshot create          Create a manual Btrfs snapshot
+   cinder-refresh-mirrors          Refresh pacman mirrors with reflector
+   cinder-setup-flatpak.sh         Enable Flathub
+
+ Security:
+   cinder-security status          Show firewall, AppArmor, disk, updates
+   cinder-security harden          Apply hardening settings
+   cinder-security audit           Run arch-audit and Lynis checks
+   cinder-security scan downloads  Scan Downloads on demand
+   cinder-security ssh enable      Enable SSH with fail2ban and UFW
+   cinder-security usb learn       Learn trusted USB devices
+   cinder-secureboot prepare       Show sbctl Secure Boot steps
+   cinder-sandbox list             Show sandbox launchers
+
+ Optional setup:
+   cinder-enable-services.sh       Enable workstation services
+   cinder-setup-docker.sh          Add your user to Docker
+   cinder-setup-gamemode.sh        Add your user to GameMode
+   cinder-setup-proton.sh          Install Proton GE through paru
+   cinder-install-vencord.sh       Run the Vencord installer
+   cinder-setup-zsh.sh             Switch to zsh and install Oh My Zsh
+
+ Defaults:
+   Desktop                         COSMIC on Wayland, XFCE Lite optional
+   Terminal                        kitty / cosmic-term / xfce4-terminal
+   Shell                           zsh with starship and zoxide
+   Audio                           PipeWire + WirePlumber
+   Filesystem target               Btrfs with zstd compression
+   Idle profile                    zram + earlyoom, heavy services off
+   Appearance                      CinderOS dark theme and wallpaper
+   Games                           Steam, Wine, GameMode, MangoHud, Vulkan
+
+================================================================
+MESSAGE
+}
+
+case "$cmd" in
+  start|welcome|summary)
+    show_start
+    ;;
+  commands|command|reference|--commands)
+    show_commands
+    ;;
+  help|-h|--help)
+    show_start
+    ;;
+  *)
+    echo "Usage: cinder-welcome [commands]" >&2
+    exit 2
+    ;;
+esac
+
+pause_if_terminal

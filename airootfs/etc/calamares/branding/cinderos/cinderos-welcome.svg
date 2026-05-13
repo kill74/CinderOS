@@ -1,0 +1,13 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300">
+  <rect width="640" height="300" rx="12" fill="#151515"/>
+  <path d="M0 220c80-26 154-29 235-6 95 28 180 26 279-4 47-14 86-17 126-11v101H0z" fill="#25140d"/>
+  <rect x="28" y="28" width="584" height="244" rx="8" fill="none" stroke="#5a260f" stroke-width="2"/>
+  <rect x="44" y="44" width="552" height="212" rx="4" fill="#17120f"/>
+  <text x="72" y="92" fill="#ff9f3f" font-family="JetBrains Mono, Fira Code, monospace" font-size="30" font-weight="700">CinderOS</text>
+  <text x="74" y="128" fill="#f2e7d5" font-family="JetBrains Mono, Fira Code, monospace" font-size="15">COSMIC, Btrfs, PipeWire, zram, and AppArmor.</text>
+  <text x="74" y="158" fill="#f2e7d5" font-family="JetBrains Mono, Fira Code, monospace" font-size="15">Install to disk or test the live session first.</text>
+  <rect x="74" y="190" width="180" height="34" rx="2" fill="#ff7a1a"/>
+  <text x="94" y="213" fill="#151515" font-family="JetBrains Mono, Fira Code, monospace" font-size="16" font-weight="700">INSTALL</text>
+  <rect x="276" y="190" width="184" height="34" rx="2" fill="#242424" stroke="#ff7a1a"/>
+  <text x="296" y="213" fill="#ffd8a6" font-family="JetBrains Mono, Fira Code, monospace" font-size="16">LIVE SESSION</text>
+</svg>

@@ -1,0 +1,357 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+args=("$@")
+cmd="${1:-status}"
+
+need_root() {
+  if [[ "${EUID}" -ne 0 ]]; then
+    exec sudo "$0" "${args[@]}"
+  fi
+}
+
+have() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+service_line() {
+  local service="$1"
+  local active enabled
+  active="$(systemctl is-active "$service" 2>/dev/null || true)"
+  enabled="$(systemctl is-enabled "$service" 2>/dev/null || true)"
+  printf '  %-28s active=%-10s enabled=%s\n' "$service" "${active:-unknown}" "${enabled:-unknown}"
+}
+
+command_line_flag() {
+  local flag="$1"
+  if [[ -r /proc/cmdline ]] && grep -qw "$flag" /proc/cmdline; then
+    echo "  $flag present"
+  else
+    echo "  $flag missing"
+  fi
+}
+
+show_secure_boot() {
+  if have sbctl; then
+    sbctl status 2>/dev/null | sed 's/^/  /' || echo "  sbctl could not read Secure Boot status"
+    return
+  fi
+
+  if have bootctl; then
+    bootctl status 2>/dev/null | awk '/Secure Boot/ { print "  " $0 }' || true
+    return
+  fi
+
+  echo "  Secure Boot status unavailable"
+}
+
+show_luks() {
+  local root_source
+  root_source="$(findmnt -no SOURCE / 2>/dev/null || true)"
+  printf '  root source: %s\n' "${root_source:-unknown}"
+
+  if [[ "$root_source" == /dev/mapper/* ]]; then
+    echo "  root appears to be mapped through device mapper"
+    return
+  fi
+
+  if lsblk -rno TYPE 2>/dev/null | grep -qx crypt; then
+    echo "  encrypted block devices are present"
+  else
+    echo "  no active LUKS mapper detected"
+  fi
+}
+
+show_arch_audit() {
+  if ! have arch-audit; then
+    echo "  arch-audit is not installed"
+    return
+  fi
+
+  local output
+  output="$(timeout 20 arch-audit --upgradable 2>&1 || true)"
+  if [[ -z "$output" ]]; then
+    echo "  arch-audit: no vulnerable installed packages with available fixes"
+  else
+    echo "$output" | sed -n '1,12p' | sed 's/^/  /'
+  fi
+}
+
+status() {
+  echo "CinderOS security status"
+  echo
+
+  echo "Firewall:"
+  service_line ufw.service
+  if have ufw; then
+    ufw status 2>/dev/null | sed 's/^/  /' || true
+  fi
+
+  echo
+  echo "AppArmor:"
+  service_line apparmor.service
+  command_line_flag "audit=1"
+  if [[ -r /proc/cmdline ]] && grep -q 'lsm=.*apparmor' /proc/cmdline; then
+    echo "  AppArmor is present in the LSM boot order"
+  else
+    echo "  AppArmor LSM boot parameter is missing from this boot"
+  fi
+  if have aa-status; then
+    aa-status --enabled >/dev/null 2>&1 && echo "  AppArmor kernel interface is enabled" || echo "  AppArmor kernel interface is not enabled"
+  fi
+
+  echo
+  echo "Boot and disk:"
+  show_secure_boot
+  show_luks
+
+  echo
+  echo "Audit and package CVEs:"
+  service_line auditd.service
+  show_arch_audit
+
+  echo
+  echo "Opt-in services:"
+  service_line sshd.service
+  service_line fail2ban.service
+  service_line usbguard.service
+  service_line clamav-daemon.service
+  service_line clamav-freshclam.service
+  service_line docker.service
+
+  echo
+  echo "Sandbox tools:"
+  have firejail && echo "  firejail: installed" || echo "  firejail: missing"
+  have bwrap && echo "  bubblewrap: installed" || echo "  bubblewrap: missing"
+}
+
+harden() {
+  need_root
+
+  sysctl --system >/dev/null || true
+  systemctl enable --now ufw.service apparmor.service earlyoom.service >/dev/null 2>&1 || true
+  systemctl disable --now sshd.service fail2ban.service usbguard.service clamav-daemon.service clamav-freshclam.service >/dev/null 2>&1 || true
+
+  if have ufw; then
+    ufw default deny incoming >/dev/null || true
+    ufw default allow outgoing >/dev/null || true
+    ufw --force enable >/dev/null || true
+  fi
+
+  echo "CinderOS balanced hardening applied."
+}
+
+audit_system() {
+  echo "CinderOS security audit"
+  echo
+
+  echo "Profile status:"
+  status
+
+  echo
+  echo "arch-audit:"
+  if have arch-audit; then
+    arch-audit --upgradable || true
+  else
+    echo "  arch-audit is not installed"
+  fi
+
+  echo
+  echo "Lynis quick audit:"
+  if have lynis; then
+    if [[ "${EUID}" -ne 0 ]]; then
+      echo "  Re-running Lynis through sudo for a fuller local audit."
+      sudo lynis audit system --quick --no-colors || true
+    else
+      lynis audit system --quick --no-colors || true
+    fi
+  else
+    echo "  lynis is not installed"
+  fi
+}
+
+scan_target() {
+  local target="${1:-downloads}"
+  case "$target" in
+    downloads)
+      printf '%s\n' "${HOME}/Downloads"
+      ;;
+    home)
+      printf '%s\n' "${HOME}"
+      ;;
+    system)
+      printf '%s\n' "/"
+      ;;
+    *)
+      printf '%s\n' "$target"
+      ;;
+  esac
+}
+
+scan() {
+  local target_name="${2:-downloads}"
+  local target
+  target="$(scan_target "$target_name")"
+
+  if [[ "$target_name" == "system" ]]; then
+    need_root
+  fi
+
+  echo "CinderOS on-demand scan"
+  echo "Target: $target"
+  echo
+
+  if [[ ! -e "$target" ]]; then
+    echo "Target does not exist: $target" >&2
+    exit 1
+  fi
+
+  if have freshclam; then
+    if [[ "${EUID}" -eq 0 ]]; then
+      freshclam || true
+    else
+      echo "Skipping ClamAV database refresh; run with sudo to refresh system databases."
+    fi
+  fi
+
+  if have clamscan; then
+    clamscan -r --infected --bell "$target" || true
+  else
+    echo "clamscan is not installed"
+  fi
+
+  if [[ "$target_name" == "system" ]]; then
+    echo
+    echo "RKHunter:"
+    if have rkhunter; then
+      rkhunter --check --sk --rwo || true
+    else
+      echo "rkhunter is not installed"
+    fi
+  fi
+}
+
+usb() {
+  local action="${2:-status}"
+  case "$action" in
+    status)
+      service_line usbguard.service
+      ;;
+    learn)
+      need_root
+      if ! have usbguard; then
+        echo "usbguard is not installed" >&2
+        exit 1
+      fi
+      install -d -m 700 /etc/usbguard
+      if [[ -f /etc/usbguard/rules.conf ]]; then
+        cp -a /etc/usbguard/rules.conf "/etc/usbguard/rules.conf.$(date +%Y%m%d%H%M%S).bak"
+      fi
+      usbguard generate-policy > /etc/usbguard/rules.conf
+      chmod 600 /etc/usbguard/rules.conf
+      echo "USBGuard policy learned from currently connected devices."
+      echo "Review /etc/usbguard/rules.conf, then run: sudo cinder-security usb enable"
+      ;;
+    enable)
+      need_root
+      systemctl enable --now usbguard.service
+      echo "USBGuard enabled. If a trusted USB device stops working, review /etc/usbguard/rules.conf."
+      ;;
+    disable)
+      need_root
+      systemctl disable --now usbguard.service
+      echo "USBGuard disabled."
+      ;;
+    *)
+      echo "Usage: cinder-security usb [status|learn|enable|disable]" >&2
+      exit 2
+      ;;
+  esac
+}
+
+ssh_safe() {
+  local action="${2:-status}"
+  case "$action" in
+    status)
+      service_line sshd.service
+      service_line fail2ban.service
+      ;;
+    enable)
+      need_root
+      systemctl enable --now sshd.service fail2ban.service
+      if have ufw; then
+        ufw allow OpenSSH || ufw allow 22/tcp || true
+      fi
+      echo "SSH enabled with fail2ban and a firewall allow rule."
+      ;;
+    disable)
+      need_root
+      systemctl disable --now sshd.service fail2ban.service
+      if have ufw; then
+        ufw --force delete allow OpenSSH || ufw --force delete allow 22/tcp || true
+      fi
+      echo "SSH disabled and fail2ban stopped."
+      ;;
+    *)
+      echo "Usage: cinder-security ssh [status|enable|disable]" >&2
+      exit 2
+      ;;
+  esac
+}
+
+explain() {
+  cat <<'MESSAGE'
+CinderOS balanced security model
+
+- UFW denies incoming connections by default while allowing normal outbound use.
+- AppArmor is enabled at boot, but profiles stay conservative to avoid breaking Steam, Discord, Docker, or COSMIC.
+- Sysctl hardening limits kernel address leaks, dmesg access, ptrace abuse, unsafe redirects, and unprivileged BPF.
+- Secure Boot tooling is present, but key enrollment is never automatic because firmware mistakes can block booting.
+- LUKS is handled by the installer path; it protects data at rest when selected during install.
+- USBGuard is opt-in because a bad policy can block keyboards, mice, docks, or recovery media.
+- SSH is installed but off by default. Enabling it through cinder-security also enables fail2ban and opens the firewall rule.
+- ClamAV and RKHunter run on demand only, so there is no always-on antivirus daemon eating idle RAM.
+- Firejail and Bubblewrap are available through cinder-sandbox for apps you choose to isolate.
+MESSAGE
+}
+
+usage() {
+  cat >&2 <<'MESSAGE'
+Usage:
+  cinder-security status
+  cinder-security harden
+  cinder-security audit
+  cinder-security scan [downloads|home|system|path]
+  cinder-security usb [status|learn|enable|disable]
+  cinder-security ssh [status|enable|disable]
+  cinder-security explain
+MESSAGE
+}
+
+case "$cmd" in
+  status)
+    status
+    ;;
+  harden)
+    harden
+    ;;
+  audit)
+    audit_system
+    ;;
+  scan)
+    scan "$@"
+    ;;
+  usb)
+    usb "$@"
+    ;;
+  ssh)
+    ssh_safe "$@"
+    ;;
+  explain)
+    explain
+    ;;
+  *)
+    usage
+    exit 2
+    ;;
+esac

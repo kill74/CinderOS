@@ -1,0 +1,5 @@
+CinderOS GRUB theme.
+
+Install-time setup copies this directory to /boot/grub/themes/cinderos
+and points GRUB_THEME at /boot/grub/themes/cinderos/theme.txt.
+

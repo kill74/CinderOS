@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+mode="$(cinder-session-mode --plain 2>/dev/null || printf 'cosmic')"
+
+if [[ "$mode" == "lite" ]]; then
+  exec tuigreet --time --remember --cmd "/usr/local/bin/cinder-session-mode launch"
+fi
+
+if command -v cosmic-greeter >/dev/null 2>&1; then
+  exec cosmic-greeter
+fi
+
+exec tuigreet --time --remember --cmd "/usr/local/bin/cinder-session-mode launch"

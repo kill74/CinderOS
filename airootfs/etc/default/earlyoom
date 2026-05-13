@@ -1,0 +1,2 @@
+EARLYOOM_ARGS="-r 60 -m 4,2 -s 10,5 --avoid '(^|/)(systemd|greetd|cosmic-session|cosmic-comp|Xwayland|dbus-broker|dockerd|containerd|sshd)$'"
+

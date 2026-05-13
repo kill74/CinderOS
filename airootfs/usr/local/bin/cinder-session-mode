@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+config="/etc/cinderos/session-mode"
+cmd="${1:-status}"
+
+read_mode() {
+  if [[ -r "$config" ]]; then
+    tr -d '[:space:]' <"$config"
+  else
+    printf 'cosmic'
+  fi
+}
+
+write_mode() {
+  mode="$1"
+  if [[ "${EUID}" -ne 0 ]]; then
+    exec sudo "$0" "$mode"
+  fi
+
+  install -d -m 755 /etc/cinderos
+  printf '%s\n' "$mode" >"$config"
+  echo "CinderOS default session mode set to: $mode"
+  echo "Log out and back in for the change to apply."
+}
+
+launch_session() {
+  mode="$(read_mode)"
+
+  case "$mode" in
+    lite)
+      if command -v startxfce4 >/dev/null 2>&1; then
+        export XDG_SESSION_TYPE=x11
+        export XDG_CURRENT_DESKTOP=XFCE
+        export XDG_SESSION_DESKTOP=xfce
+        export QT_QPA_PLATFORM=xcb
+        unset WAYLAND_DISPLAY
+        exec startxfce4
+      fi
+      echo "XFCE Lite is unavailable; falling back to COSMIC." >&2
+      ;;
+  esac
+
+  export XDG_SESSION_TYPE=wayland
+  export XDG_CURRENT_DESKTOP=COSMIC
+  export XDG_SESSION_DESKTOP=cosmic
+  export QT_QPA_PLATFORM=wayland
+  exec cosmic-session
+}
+
+case "$cmd" in
+  cosmic)
+    write_mode cosmic
+    ;;
+  lite|xfce)
+    write_mode lite
+    ;;
+  status)
+    echo "CinderOS default session mode: $(read_mode)"
+    echo "Available modes: cosmic, lite"
+    ;;
+  --plain)
+    read_mode
+    ;;
+  launch)
+    launch_session
+    ;;
+  *)
+    echo "Usage: cinder-session-mode [cosmic|lite|status]" >&2
+    exit 2
+    ;;
+esac
+

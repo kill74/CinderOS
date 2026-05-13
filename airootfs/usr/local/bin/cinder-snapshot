@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+config_name="root"
+config_path="/etc/snapper/configs/${config_name}"
+
+need_root() {
+  if [[ "${EUID}" -ne 0 ]]; then
+    exec sudo "$0" "$@"
+  fi
+}
+
+set_snapper_value() {
+  key="$1"
+  value="$2"
+  if grep -Eq "^${key}=" "$config_path"; then
+    sed -i "s|^${key}=.*|${key}=\"${value}\"|" "$config_path"
+  else
+    printf '%s="%s"\n' "$key" "$value" >>"$config_path"
+  fi
+}
+
+setup_snapper() {
+  need_root "$@"
+
+  if ! command -v snapper >/dev/null 2>&1; then
+    echo "snapper is not installed." >&2
+    exit 1
+  fi
+
+  if ! findmnt -no FSTYPE / | grep -qx btrfs; then
+    echo "Root filesystem is not Btrfs; skipping Snapper setup." >&2
+    exit 0
+  fi
+
+  if [[ ! -e "$config_path" ]]; then
+    snapper -c "$config_name" create-config /
+  fi
+
+  mkdir -p /.snapshots
+  chmod 750 /.snapshots || true
+
+  set_snapper_value ALLOW_GROUPS wheel
+  set_snapper_value SYNC_ACL yes
+  set_snapper_value NUMBER_CLEANUP yes
+  set_snapper_value NUMBER_LIMIT 10
+  set_snapper_value NUMBER_LIMIT_IMPORTANT 5
+  set_snapper_value TIMELINE_CREATE yes
+  set_snapper_value TIMELINE_CLEANUP yes
+  set_snapper_value TIMELINE_LIMIT_HOURLY 6
+  set_snapper_value TIMELINE_LIMIT_DAILY 7
+  set_snapper_value TIMELINE_LIMIT_WEEKLY 4
+  set_snapper_value TIMELINE_LIMIT_MONTHLY 3
+  set_snapper_value TIMELINE_LIMIT_YEARLY 0
+
+  mkdir -p /etc/conf.d
+  printf 'SNAPPER_CONFIGS="root"\n' >/etc/conf.d/snapper
+
+  systemctl enable snapper-timeline.timer snapper-cleanup.timer snapper-boot.timer >/dev/null 2>&1 || true
+  systemctl enable grub-btrfsd.service >/dev/null 2>&1 || true
+  systemctl enable btrfs-scrub@-.timer >/dev/null 2>&1 || true
+  systemctl enable btrfsmaintenance-refresh.path >/dev/null 2>&1 || true
+
+  if [[ -e /boot/grub/grub.cfg ]] && command -v grub-mkconfig >/dev/null 2>&1; then
+    grub-mkconfig -o /boot/grub/grub.cfg || true
+  fi
+
+  echo "CinderOS snapshots are configured for the root filesystem."
+}
+
+create_snapshot() {
+  need_root "$@"
+  snapper -c "$config_name" create --description "CinderOS manual snapshot" --userdata "important=yes"
+}
+
+list_snapshots() {
+  snapper -c "$config_name" list
+}
+
+open_manager() {
+  if command -v btrfs-assistant >/dev/null 2>&1; then
+    exec btrfs-assistant
+  fi
+
+  if command -v snapper-gui >/dev/null 2>&1; then
+    exec snapper-gui
+  fi
+
+  list_snapshots
+}
+
+case "${1:-status}" in
+  setup)
+    setup_snapper "$@"
+    ;;
+  create)
+    create_snapshot "$@"
+    ;;
+  list)
+    list_snapshots
+    ;;
+  open)
+    open_manager
+    ;;
+  status)
+    if [[ -e "$config_path" ]]; then
+      echo "Snapper root config exists at $config_path."
+      list_snapshots || true
+    else
+      echo "Snapper root config is not configured yet."
+    fi
+    ;;
+  *)
+    echo "Usage: cinder-snapshot [setup|create|list|open|status]" >&2
+    exit 2
+    ;;
+esac

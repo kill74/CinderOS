@@ -1,0 +1,388 @@
+#!/usr/bin/env python3
+import os
+import shlex
+import shutil
+import subprocess
+import sys
+
+import gi
+
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+
+from gi.repository import Adw, Gtk
+
+
+APP_ID = "dev.cinderos.Control"
+
+
+def command_exists(name):
+    return shutil.which(name) is not None
+
+
+def is_live_session():
+    return os.path.isdir("/run/archiso") or command_exists("cinder-install")
+
+
+def command_output(args, fallback="Unknown", timeout=2):
+    try:
+        result = subprocess.run(args, capture_output=True, text=True, timeout=timeout, check=False)
+    except (OSError, subprocess.SubprocessError):
+        return fallback
+
+    output = result.stdout.strip()
+    if output:
+        return output.splitlines()[0].strip()
+    return fallback
+
+
+def service_state(unit):
+    return command_output(["systemctl", "is-active", unit], "unknown")
+
+
+def session_mode():
+    if command_exists("cinder-session-mode"):
+        return command_output(["cinder-session-mode", "--plain"], "cosmic")
+
+    try:
+        with open("/etc/cinderos/session-mode", "r", encoding="utf-8") as handle:
+            return handle.read().strip() or "cosmic"
+    except OSError:
+        return "cosmic"
+
+
+def memory_profile_summary():
+    earlyoom = service_state("earlyoom.service")
+    heavy_services = {
+        "Docker": "docker.service",
+        "Printing": "cups.service",
+        "Bluetooth": "bluetooth.service",
+        "fwupd": "fwupd.service",
+    }
+    active_heavy = [name for name, unit in heavy_services.items() if service_state(unit) == "active"]
+
+    if earlyoom == "active" and not active_heavy:
+        return "Low-idle"
+    if active_heavy:
+        return "Custom: " + ", ".join(active_heavy)
+    if earlyoom in ("inactive", "failed"):
+        return "Not applied"
+    return "Unknown"
+
+
+def snapshots_summary():
+    if os.path.exists("/etc/snapper/configs/root"):
+        return "Configured"
+    return "Not configured"
+
+
+def firewall_summary():
+    return service_state("ufw.service")
+
+
+def apparmor_summary():
+    return service_state("apparmor.service")
+
+
+def run_detached(args):
+    subprocess.Popen(args, start_new_session=True)
+
+
+def run_in_terminal(command):
+    trailer = "echo; read -r -p 'Press Enter to close...' _"
+    shell_command = f"{command}; status=$?; {trailer}; exit $status"
+
+    if command_exists("kitty"):
+        run_detached(["kitty", "-e", "bash", "-lc", shell_command])
+        return
+
+    if command_exists("cosmic-term"):
+        run_detached(["cosmic-term", "--command", "bash", "-lc", shell_command])
+        return
+
+    run_detached(["bash", "-lc", shell_command])
+
+
+def run_desktop(command):
+    subprocess.Popen(["bash", "-lc", command], start_new_session=True)
+
+
+class CinderControl(Adw.Application):
+    def __init__(self, default_page="welcome"):
+        super().__init__(application_id=APP_ID)
+        self.default_page = default_page
+        self.notebook = None
+        self.page_index = {}
+
+    def do_activate(self):
+        win = Adw.ApplicationWindow(application=self)
+        win.set_title("CinderOS Settings")
+        win.set_default_size(980, 680)
+
+        toolbar = Adw.ToolbarView()
+        header = Adw.HeaderBar()
+        title = Gtk.Label()
+        title.set_markup("<b>CinderOS Settings</b>")
+        header.set_title_widget(title)
+        toolbar.add_top_bar(header)
+
+        self.notebook = Gtk.Notebook()
+        self.notebook.set_tab_pos(Gtk.PositionType.TOP)
+        self.notebook.set_scrollable(True)
+        toolbar.set_content(self.notebook)
+
+        self.add_page("welcome", "Start", self.welcome_page())
+        self.add_page("status", "Status", self.status_page())
+        self.add_page("installer", "Installer", self.installer_page())
+        self.add_page("system", "System", self.system_page())
+        self.add_page("appearance", "Appearance", self.appearance_page())
+        self.add_alias("rice", "appearance")
+        self.add_page("memory", "Memory", self.memory_page())
+        self.add_page("services", "Services", self.services_page())
+        self.add_page("security", "Security", self.security_page())
+        self.add_page("session", "Session", self.session_page())
+        self.add_page("gaming", "Games", self.gaming_page())
+        self.add_alias("games", "gaming")
+        self.add_page("snapshots", "Backups", self.snapshots_page())
+        self.add_alias("backups", "snapshots")
+        self.add_page("about", "About", self.about_page())
+
+        if self.default_page in self.page_index:
+            self.notebook.set_current_page(self.page_index[self.default_page])
+
+        win.set_content(toolbar)
+        win.present()
+
+    def add_page(self, name, title, page):
+        index = self.notebook.append_page(page, Gtk.Label(label=title))
+        self.page_index[name] = index
+
+    def add_alias(self, alias, target):
+        if target in self.page_index:
+            self.page_index[alias] = self.page_index[target]
+
+    def preferences_page(self):
+        page = Adw.PreferencesPage()
+        page.set_margin_top(18)
+        page.set_margin_bottom(18)
+        page.set_margin_start(18)
+        page.set_margin_end(18)
+        return page
+
+    def add_group(self, page, title, description=None):
+        group = Adw.PreferencesGroup()
+        group.set_title(title)
+        if description:
+            group.set_description(description)
+        page.add(group)
+        return group
+
+    def open_page(self, name):
+        if name in self.page_index:
+            self.notebook.set_current_page(self.page_index[name])
+
+    def add_action(self, group, title, subtitle, label, command, terminal=True, suggested=False):
+        row = Adw.ActionRow()
+        row.set_title(title)
+        row.set_subtitle(subtitle)
+        button = Gtk.Button(label=label)
+        button.set_valign(Gtk.Align.CENTER)
+        if suggested:
+            button.add_css_class("suggested-action")
+        button.connect("clicked", lambda _button: run_in_terminal(command) if terminal else run_desktop(command))
+        row.add_suffix(button)
+        row.set_activatable_widget(button)
+        group.add(row)
+
+    def add_nav(self, group, title, subtitle, label, page_name):
+        row = Adw.ActionRow()
+        row.set_title(title)
+        row.set_subtitle(subtitle)
+        button = Gtk.Button(label=label)
+        button.set_valign(Gtk.Align.CENTER)
+        button.connect("clicked", lambda _button: self.open_page(page_name))
+        row.add_suffix(button)
+        row.set_activatable_widget(button)
+        group.add(row)
+
+    def add_info(self, group, title, subtitle):
+        row = Adw.ActionRow()
+        row.set_title(title)
+        row.set_subtitle(subtitle)
+        group.add(row)
+
+    def welcome_page(self):
+        page = self.preferences_page()
+        live = is_live_session()
+
+        if live:
+            group = self.add_group(page, "Start", "Install, or check the live session first.")
+            self.add_action(group, "Install CinderOS", "Open the installer.", "Install", "cinder-install", terminal=False, suggested=True)
+            self.add_action(group, "Hardware", "Check graphics hardware and session settings.", "Check", "sudo cinder-hardware-setup")
+            self.add_action(group, "Mirrors", "Update the pacman mirror list.", "Update", "cinder-refresh-mirrors")
+            self.add_nav(group, "Status", "View session, memory, security, and backup state.", "View", "status")
+            self.add_info(group, "Live session", "Changes here are temporary until CinderOS is installed.")
+        else:
+            group = self.add_group(page, "Start", "A few setup tasks worth checking.")
+            self.add_action(group, "Appearance", "Apply the default wallpaper and user theme files.", "Apply", "cinder-rice apply", suggested=True)
+            self.add_action(group, "Hardware", "Check graphics hardware and session settings.", "Check", "sudo cinder-hardware-setup")
+            self.add_nav(group, "Status", "View session, memory, security, and backup state.", "View", "status")
+            self.add_action(group, "Backups", "Set up Btrfs snapshots.", "Set up", "sudo cinder-snapshot setup")
+
+        nav = self.add_group(page, "Pages")
+        self.add_nav(nav, "Status", "Session, memory, security, and backups.", "Open", "status")
+        self.add_nav(nav, "Appearance", "Wallpaper, terminal, shell, GTK, and boot theme.", "Open", "appearance")
+        self.add_nav(nav, "Memory", "Zram, earlyoom, pressure, and memory profiles.", "Open", "memory")
+        self.add_nav(nav, "Security", "Firewall, AppArmor, SSH, USBGuard, scans, and Secure Boot.", "Open", "security")
+        self.add_nav(nav, "Games", "GameMode, Proton GE, Vencord, and Steam.", "Open", "gaming")
+        self.add_nav(nav, "Backups", "Snapper, manual snapshots, and Btrfs Assistant.", "Open", "snapshots")
+        self.add_nav(nav, "Session", "Default login session.", "Open", "session")
+
+        guide = self.add_group(page, "Reference")
+        self.add_action(guide, "Commands", "Show the full command list.", "Open", "cinder-welcome commands")
+        return page
+
+    def status_page(self):
+        page = self.preferences_page()
+        group = self.add_group(page, "Status", "Current system state.")
+        self.add_info(group, "Mode", "Live session" if is_live_session() else "Installed system")
+        self.add_info(group, "Session", session_mode())
+        self.add_info(group, "Memory profile", memory_profile_summary())
+        self.add_info(group, "Firewall", firewall_summary())
+        self.add_info(group, "AppArmor", apparmor_summary())
+        self.add_info(group, "Backups", snapshots_summary())
+
+        actions = self.add_group(page, "Checks")
+        self.add_action(actions, "Readiness check", "Check boot, rollback, services, graphics, and update state.", "Run", "cinder-doctor")
+        self.add_action(actions, "Update system", "Run pacman updates with a pre-update snapshot when configured.", "Update", "sudo cinder-update")
+        self.add_action(actions, "Memory details", "Open the full memory report.", "Open", "cinder-memory status")
+        self.add_action(actions, "Security details", "Open the full security report.", "Open", "cinder-security status")
+        self.add_action(actions, "Backup details", "Show snapshot state.", "Open", "cinder-snapshot status")
+        return page
+
+    def installer_page(self):
+        page = self.preferences_page()
+        group = self.add_group(page, "Installer", "Available from the live session.")
+        if is_live_session():
+            self.add_action(group, "Install CinderOS", "Open the installer.", "Install", "cinder-install", terminal=False, suggested=True)
+        else:
+            self.add_info(group, "Installed system", "The live installer is not available here.")
+        self.add_info(group, "Target layout", "Btrfs with separate home, logs, cache, tmp, and snapshots subvolumes.")
+        return page
+
+    def system_page(self):
+        page = self.preferences_page()
+        group = self.add_group(page, "System", "Power and hardware settings.")
+        self.add_action(group, "Readiness check", "Check boot, rollback, services, graphics, and update state.", "Run", "cinder-doctor")
+        self.add_action(group, "Update system", "Run pacman updates with a pre-update snapshot when configured.", "Update", "sudo cinder-update")
+        self.add_action(group, "Hardware", "Write graphics environment settings for this machine.", "Check", "sudo cinder-hardware-setup")
+        self.add_action(group, "Performance", "Use the performance power profile and game memory settings.", "Apply", "cinder-tune performance")
+        self.add_action(group, "Balanced", "Use the default memory and power profile.", "Apply", "cinder-tune balanced")
+        self.add_action(group, "Quiet", "Use the power-saver profile and stop background services.", "Apply", "cinder-tune quiet")
+        self.add_action(group, "Mission Center", "Open the graphical system monitor when installed.", "Open", "mission-center", terminal=False)
+        return page
+
+    def memory_page(self):
+        page = self.preferences_page()
+        group = self.add_group(page, "Memory", "Zram and earlyoom help keep the desktop responsive.")
+        self.add_action(group, "Status", "View RAM, zram, swap devices, pressure, and service state.", "View", "cinder-memory status")
+        self.add_action(group, "Low-idle", "Stop background services and apply desktop memory settings.", "Apply", "cinder-memory low-idle")
+        self.add_action(group, "Games", "Apply game memory settings.", "Apply", "cinder-memory gaming")
+        self.add_action(group, "Dev profile", "Tune dirty page behavior for builds and local development.", "Apply", "cinder-memory dev")
+        self.add_action(group, "Details", "Show what the memory profiles change.", "Read", "cinder-memory explain")
+        self.add_action(group, "Stress test", "Run a short memory pressure test with stress-ng.", "Run", "cinder-memory test")
+        return page
+
+    def services_page(self):
+        page = self.preferences_page()
+        group = self.add_group(page, "Services", "Off by default. Enable only what you use.")
+        self.add_action(group, "Docker", "Enable Docker only when you need containers.", "Enable", "sudo systemctl enable --now docker.service")
+        self.add_action(group, "Docker", "Stop Docker and remove it from boot.", "Disable", "sudo systemctl disable --now docker.service")
+        self.add_action(group, "Bluetooth", "Enable Bluetooth when you need wireless devices.", "Enable", "sudo systemctl enable --now bluetooth.service")
+        self.add_action(group, "Bluetooth", "Stop Bluetooth and remove it from boot.", "Disable", "sudo systemctl disable --now bluetooth.service")
+        self.add_action(group, "Printing", "Enable CUPS when you need printing.", "Enable", "sudo systemctl enable --now cups.service")
+        self.add_action(group, "Printing", "Stop CUPS and remove it from boot.", "Disable", "sudo systemctl disable --now cups.service")
+        self.add_action(group, "Firmware updates", "Enable fwupd when checking firmware updates.", "Enable", "sudo systemctl enable --now fwupd.service")
+        self.add_action(group, "Firmware updates", "Stop fwupd and remove it from boot.", "Disable", "sudo systemctl disable --now fwupd.service")
+        self.add_action(group, "Backups", "Configure and enable Snapper timers.", "Enable", "sudo cinder-snapshot setup")
+        self.add_action(group, "Backups", "Pause Snapper and Btrfs maintenance timers.", "Disable", "sudo systemctl disable --now cinder-snapshot-setup.service snapper-timeline.timer snapper-cleanup.timer snapper-boot.timer grub-btrfsd.service btrfsmaintenance-refresh.path btrfs-scrub@-.timer")
+        self.add_action(group, "Flathub", "Enable Flathub only when you want Flatpak apps.", "Enable", "cinder-setup-flatpak.sh")
+        return page
+
+    def security_page(self):
+        page = self.preferences_page()
+        group = self.add_group(page, "Security", "Firewall and AppArmor are enabled; other services stay manual.")
+        self.add_action(group, "Status", "View firewall, AppArmor, disk, updates, and service state.", "View", "cinder-security status")
+        self.add_action(group, "Apply settings", "Apply sysctl hardening, UFW defaults, and AppArmor service state.", "Apply", "sudo cinder-security harden")
+        self.add_action(group, "Run audit", "Run arch-audit, Lynis quick checks, and local status validation.", "Run", "cinder-security audit")
+        self.add_action(group, "Scan downloads", "Run an on-demand ClamAV scan of your Downloads folder.", "Scan", "cinder-security scan downloads")
+        self.add_action(group, "Sandbox tools", "List Firejail and Bubblewrap launch commands.", "Open", "cinder-sandbox list")
+        self.add_action(group, "Secure Boot status", "Detect firmware state and list EFI files that can be signed.", "Show", "cinder-secureboot status")
+        self.add_action(group, "Prepare Secure Boot", "Show sbctl steps. Key enrollment stays manual.", "Prepare", "cinder-secureboot prepare")
+        self.add_action(group, "USBGuard policy", "Learn currently connected USB devices without enabling the service.", "Learn", "sudo cinder-security usb learn")
+        self.add_action(group, "Enable SSH", "Start SSH with fail2ban and a firewall allow rule.", "Enable", "sudo cinder-security ssh enable")
+        self.add_action(group, "Disable SSH", "Stop SSH and fail2ban.", "Disable", "sudo cinder-security ssh disable")
+        self.add_action(group, "Details", "Show the security defaults.", "Read", "cinder-security explain")
+        return page
+
+    def session_page(self):
+        page = self.preferences_page()
+        group = self.add_group(page, "Session", "Choose the default login session.")
+        self.add_action(group, "Current session", "Show the session used at login.", "Show", "cinder-session-mode status")
+        self.add_action(group, "COSMIC", "Use the COSMIC Wayland session.", "Use", "sudo cinder-session-mode cosmic")
+        self.add_action(group, "XFCE Lite", "Use the lightweight XFCE session by default.", "Use", "sudo cinder-session-mode lite")
+        return page
+
+    def gaming_page(self):
+        page = self.preferences_page()
+        group = self.add_group(page, "Games", "Optional setup for games and related tools.")
+        self.add_action(group, "GameMode group", "Add your user to the GameMode group.", "Apply", "cinder-setup-gamemode.sh")
+        self.add_action(group, "Docker group", "Enable Docker and add your user to the Docker group.", "Apply", "cinder-setup-docker.sh")
+        self.add_action(group, "Proton GE", "Install proton-ge-custom through paru when available.", "Install", "cinder-setup-proton.sh")
+        self.add_action(group, "Vencord", "Run the Vencord installer for Discord.", "Install", "cinder-install-vencord.sh")
+        self.add_action(group, "Steam", "Open Steam if it is installed.", "Open", "steam", terminal=False)
+        return page
+
+    def snapshots_page(self):
+        page = self.preferences_page()
+        group = self.add_group(page, "Backups", "Optional Btrfs snapshots and rollback tools.")
+        self.add_action(group, "Set up backups", "Create or repair the root Snapper config.", "Set up", "sudo cinder-snapshot setup")
+        self.add_action(group, "Create backup", "Create a labeled manual root snapshot.", "Create", "sudo cinder-snapshot create")
+        self.add_action(group, "List snapshots", "Show root snapshots in the terminal.", "List", "cinder-snapshot list")
+        self.add_action(group, "Rebuild boot menu", "Refresh GRUB after kernel or snapshot changes.", "Rebuild", "sudo grub-mkconfig -o /boot/grub/grub.cfg")
+        self.add_action(group, "Btrfs Assistant", "Open the snapshot manager.", "Open", "cinder-snapshot open", terminal=False)
+        return page
+
+    def appearance_page(self):
+        page = self.preferences_page()
+        group = self.add_group(page, "Appearance", "Desktop and boot theme settings.")
+        self.add_action(group, "Status", "View wallpaper, COSMIC background, Kitty, and Starship settings.", "View", "cinder-rice status")
+        self.add_action(group, "Apply appearance", "Apply the default wallpaper and user theme files.", "Apply", "cinder-rice apply")
+        self.add_action(group, "Reset appearance", "Restore saved user files when backups exist.", "Reset", "cinder-rice reset")
+        self.add_action(group, "Details", "Show what the appearance profile changes.", "Read", "cinder-rice explain")
+        self.add_action(group, "COSMIC settings", "Open desktop settings.", "Open", "cosmic-settings", terminal=False)
+        self.add_action(group, "Rebuild boot theme", "Apply Plymouth and regenerate GRUB config.", "Rebuild", "sudo plymouth-set-default-theme -R cinderos; sudo grub-mkconfig -o /boot/grub/grub.cfg")
+        self.add_info(group, "Wallpaper", "/usr/share/backgrounds/cinderos/default.jpg")
+        self.add_info(group, "GRUB theme", "/boot/grub/themes/cinderos/theme.txt")
+        return page
+
+    def about_page(self):
+        page = self.preferences_page()
+        group = self.add_group(page, "CinderOS 1.0.0 Ember")
+        self.add_info(group, "Base", "Arch Linux, linux-zen default, linux-lts fallback, COSMIC, Btrfs, PipeWire, Wayland.")
+        self.add_info(group, "Defaults", "COSMIC, Btrfs, PipeWire, zram, AppArmor, and manual background services.")
+        self.add_action(group, "Project notes", "Open the local CinderOS notes.", "Open", "xdg-open file:///usr/share/doc/cinderos/README.md", terminal=False)
+        return page
+
+
+def default_page_from_args(argv):
+    if "--page" in argv:
+        index = argv.index("--page")
+        if index + 1 < len(argv):
+            return argv[index + 1]
+    return "welcome"
+
+
+if __name__ == "__main__":
+    app = CinderControl(default_page_from_args(sys.argv))
+    app.run([sys.argv[0]])

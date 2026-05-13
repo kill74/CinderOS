@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+marker="${HOME}/.config/cinderos/first-run-done"
+mkdir -p "$(dirname "$marker")"
+
+if [[ -e "$marker" ]]; then
+  exit 0
+fi
+
+touch "$marker"
+
+cinder-rice apply --quiet >/dev/null 2>&1 || true
+
+if command -v cinder-control >/dev/null 2>&1; then
+  exec cinder-control --page welcome
+fi
+
+if command -v kitty >/dev/null 2>&1; then
+  exec kitty --title "CinderOS Start" cinder-welcome
+fi
+
+if command -v cosmic-term >/dev/null 2>&1; then
+  exec cosmic-term --command cinder-welcome
+fi
+
+exec cinder-welcome

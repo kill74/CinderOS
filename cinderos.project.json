@@ -1,0 +1,103 @@
+{
+  "name": "CinderOS",
+  "codename": "Ember",
+  "version": "1.0.0",
+  "base": "Arch Linux",
+  "arch": "x86_64",
+  "iso_label": "CINDEROS_1_0_0",
+  "iso_filename": "cinderos-1.0.0-x86_64.iso",
+  "desktop": "COSMIC with XFCE Lite option",
+  "kernel": {
+    "primary": "linux-zen",
+    "fallback": "linux",
+    "headers": "linux-zen-headers"
+  },
+  "target_hardware": [
+    "AMD GPU and CPU",
+    "NVIDIA GPU",
+    "Intel GPU and CPU"
+  ],
+  "filesystem_default": "btrfs",
+  "installer": "calamares",
+  "installer_experience": {
+    "style": "retro dark Ember",
+    "branding": "airootfs/etc/calamares/branding/cinderos",
+    "slideshow": "airootfs/etc/calamares/branding/cinderos/show.qml",
+    "live_launcher": "cinder-install",
+    "post_install_cleanup": "airootfs/etc/calamares/modules/shellprocess-cinderos-post.conf"
+  },
+  "user_environment": {
+    "session": "COSMIC Wayland by default, XFCE Lite optional",
+    "live_login": "auto-login cinder user into configured session",
+    "installed_login": "greetd with COSMIC greeter or tuigreet fallback",
+    "control_center": "cinder-control",
+    "first_run": "cinder-first-run",
+    "hardware_setup": "cinder-hardware-setup",
+    "memory_helper": "cinder-memory",
+    "sandbox_helper": "cinder-sandbox",
+    "secureboot_helper": "cinder-secureboot",
+    "security_helper": "cinder-security",
+    "session_helper": "cinder-session-mode",
+    "snapshot_helper": "cinder-snapshot",
+    "tuning_helper": "cinder-tune"
+  },
+  "low_idle": {
+    "target_ram": "16 GB",
+    "zram": "zram-generator with zstd and priority 100",
+    "oom_protection": "earlyoom",
+    "default_session": "cosmic",
+    "optional_session": "xfce-lite",
+    "opt_in_services": [
+      "docker",
+      "bluetooth",
+      "cups",
+      "fwupd",
+      "snapper timers",
+      "btrfsmaintenance",
+      "flatpak setup"
+    ]
+  },
+  "recovery": {
+    "snapshots": "snapper",
+    "pacman_hooks": "snap-pac",
+    "boot_menu": "grub-btrfs",
+    "gui": "btrfs-assistant",
+    "maintenance": "btrfsmaintenance"
+  },
+  "security": {
+    "profile": "balanced secure",
+    "default_services": [
+      "ufw",
+      "apparmor"
+    ],
+    "boot_parameters": [
+      "lsm=landlock,lockdown,yama,integrity,apparmor,bpf",
+      "audit=1"
+    ],
+    "helpers": [
+      "cinder-security",
+      "cinder-secureboot",
+      "cinder-sandbox"
+    ],
+    "opt_in_services": [
+      "sshd",
+      "fail2ban",
+      "usbguard",
+      "clamav-daemon",
+      "clamav-freshclam",
+      "auditd"
+    ],
+    "secure_boot": "sbctl tooling is available, but key enrollment is never automatic",
+    "usbguard": "policy generation is available through cinder-security usb learn, service remains opt-in",
+    "scanners": "ClamAV and RKHunter are on-demand only to preserve low idle RAM"
+  },
+  "build": {
+    "command": "sudo mkarchiso -v -w /tmp/cinderos-work -o ~/cinderos-out .",
+    "work_dir": "/tmp/cinderos-work",
+    "out_dir": "~/cinderos-out"
+  },
+  "package_manifests": {
+    "pacman": "packages.x86_64",
+    "aur": "packages.aur"
+  }
+}

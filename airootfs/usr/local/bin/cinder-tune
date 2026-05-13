@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+mode="${1:-status}"
+
+set_power_profile() {
+  profile="$1"
+  if command -v powerprofilesctl >/dev/null 2>&1; then
+    powerprofilesctl set "$profile" || true
+  fi
+}
+
+case "$mode" in
+  performance)
+    set_power_profile performance
+    cinder-memory gaming
+    sudo sysctl -w kernel.nmi_watchdog=0 >/dev/null || true
+    echo "CinderOS tuning mode: performance"
+    ;;
+  balanced)
+    set_power_profile balanced
+    cinder-memory low-idle
+    echo "CinderOS tuning mode: balanced"
+    ;;
+  quiet|battery)
+    set_power_profile power-saver
+    cinder-memory low-idle
+    echo "CinderOS tuning mode: quiet"
+    ;;
+  status)
+    echo "CinderOS tuning status"
+    if command -v powerprofilesctl >/dev/null 2>&1; then
+      powerprofilesctl get || true
+    fi
+    cinder-memory status || true
+    ;;
+  *)
+    echo "Usage: cinder-tune [performance|balanced|quiet|status]" >&2
+    exit 2
+    ;;
+esac

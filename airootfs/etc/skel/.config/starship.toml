@@ -1,0 +1,35 @@
+add_newline = false
+palette = "cinder"
+
+[palettes.cinder]
+ember = "#ff7a1a"
+ember_soft = "#ffb066"
+graphite = "#151515"
+ash = "#8a8a8a"
+cream = "#f2e7d5"
+
+[username]
+style_user = "bold ember"
+show_always = false
+
+[hostname]
+style = "bold ash"
+ssh_only = true
+
+[character]
+success_symbol = "[>](bold ember)"
+error_symbol = "[x](bold red)"
+
+[directory]
+truncation_length = 4
+style = "bold ember_soft"
+
+[git_branch]
+style = "bold ember"
+
+[git_status]
+style = "bold ash"
+
+[cmd_duration]
+style = "bold ash"
+format = "[$duration]($style) "

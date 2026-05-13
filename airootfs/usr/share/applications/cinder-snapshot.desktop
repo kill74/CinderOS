@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=CinderOS Backups
+Comment=Manage Btrfs snapshots
+Exec=cinder-control --page backups
+Icon=drive-harddisk-system
+Terminal=false
+Type=Application
+Categories=System;Settings;
+Keywords=CinderOS;snapper;btrfs;backup;rollback;

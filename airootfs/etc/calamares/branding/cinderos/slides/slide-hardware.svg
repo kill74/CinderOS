@@ -1,0 +1,11 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 260">
+  <rect width="720" height="260" rx="10" fill="#17120f"/>
+  <rect x="92" y="48" width="180" height="150" rx="10" fill="#242424" stroke="#ff7a1a" stroke-width="3"/>
+  <rect x="302" y="48" width="116" height="150" rx="10" fill="#242424" stroke="#ff9f3f" stroke-width="3"/>
+  <rect x="448" y="48" width="180" height="150" rx="10" fill="#242424" stroke="#ff7a1a" stroke-width="3"/>
+  <text x="152" y="133" fill="#ff9f3f" font-family="JetBrains Mono, monospace" font-size="28">AMD</text>
+  <text x="334" y="133" fill="#ff9f3f" font-family="JetBrains Mono, monospace" font-size="28">INTEL</text>
+  <text x="494" y="133" fill="#ff9f3f" font-family="JetBrains Mono, monospace" font-size="28">NVIDIA</text>
+  <path d="M110 218h500" stroke="#5a260f" stroke-width="6" stroke-linecap="round"/>
+</svg>
+

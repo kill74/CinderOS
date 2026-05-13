@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export QT_QPA_PLATFORM="${QT_QPA_PLATFORM:-wayland;xcb}"
+export QT_STYLE_OVERRIDE="${QT_STYLE_OVERRIDE:-}"
+
+if command -v pkexec >/dev/null 2>&1; then
+  exec pkexec env DISPLAY="${DISPLAY:-}" WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-}" XAUTHORITY="${XAUTHORITY:-}" XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-}" QT_QPA_PLATFORM="${QT_QPA_PLATFORM}" /usr/bin/calamares
+fi
+
+exec sudo -E /usr/bin/calamares
+

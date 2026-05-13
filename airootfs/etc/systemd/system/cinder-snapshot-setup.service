@@ -1,0 +1,13 @@
+[Unit]
+Description=Ensure CinderOS Snapper root snapshots are configured
+ConditionPathExists=/usr/bin/snapper
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/cinder-snapshot setup
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+

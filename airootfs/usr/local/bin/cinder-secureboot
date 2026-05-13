@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+args=("$@")
+cmd="${1:-status}"
+
+need_root() {
+  if [[ "${EUID}" -ne 0 ]]; then
+    exec sudo "$0" "${args[@]}"
+  fi
+}
+
+have() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+need_sbctl() {
+  if ! have sbctl; then
+    echo "sbctl is not installed." >&2
+    exit 1
+  fi
+}
+
+efi_files() {
+  shopt -s nullglob
+  local files=(
+    /boot/EFI/BOOT/BOOTX64.EFI
+    /boot/EFI/GRUB/grubx64.efi
+    /boot/EFI/CinderOS/grubx64.efi
+    /boot/EFI/Linux/*.efi
+    /efi/EFI/BOOT/BOOTX64.EFI
+    /efi/EFI/GRUB/grubx64.efi
+    /efi/EFI/CinderOS/grubx64.efi
+    /efi/EFI/Linux/*.efi
+  )
+  printf '%s\n' "${files[@]}"
+}
+
+status() {
+  echo "CinderOS Secure Boot status"
+  echo
+
+  if have sbctl; then
+    sbctl status || true
+  elif have bootctl; then
+    bootctl status || true
+  else
+    echo "No Secure Boot status helper found."
+  fi
+
+  echo
+  echo "EFI files that can be signed:"
+  local found=0
+  while IFS= read -r file; do
+    [[ -n "$file" ]] || continue
+    found=1
+    printf '  %s\n' "$file"
+  done < <(efi_files)
+  [[ "$found" -eq 1 ]] || echo "  no common EFI files found under /boot or /efi"
+}
+
+prepare() {
+  cat <<'MESSAGE'
+CinderOS Secure Boot workflow
+
+Secure Boot is powerful but firmware-specific. CinderOS never enrolls keys automatically.
+
+Recommended installed-system flow:
+
+  1. sudo cinder-secureboot create-keys
+  2. sudo cinder-secureboot sign
+  3. sudo cinder-secureboot verify
+  4. sudo cinder-secureboot enroll
+
+The enroll step asks for an exact confirmation word before it calls sbctl enroll-keys.
+If your firmware is already using Microsoft keys, cinder-secureboot enroll uses sbctl's
+Microsoft-key compatible mode.
+MESSAGE
+}
+
+create_keys() {
+  need_root
+  need_sbctl
+  sbctl create-keys
+}
+
+sign_files() {
+  need_root
+  need_sbctl
+
+  local found=0
+  while IFS= read -r file; do
+    [[ -n "$file" ]] || continue
+    found=1
+    echo "Signing $file"
+    sbctl sign -s "$file"
+  done < <(efi_files)
+
+  if [[ "$found" -ne 1 ]]; then
+    echo "No common EFI files found to sign." >&2
+    exit 1
+  fi
+}
+
+verify() {
+  need_sbctl
+  sbctl verify || true
+}
+
+enroll() {
+  need_root
+  need_sbctl
+
+  cat <<'MESSAGE'
+This will enroll Secure Boot keys into firmware using sbctl.
+Wrong firmware/key handling can make the machine fail Secure Boot until settings are repaired.
+MESSAGE
+  printf 'Type ENROLL to continue: '
+  read -r answer
+  if [[ "$answer" != "ENROLL" ]]; then
+    echo "Canceled."
+    exit 1
+  fi
+
+  sbctl enroll-keys -m
+}
+
+explain() {
+  cat <<'MESSAGE'
+Secure Boot protects the boot chain before Linux starts.
+LUKS protects your installed data at rest after the disk is encrypted.
+They solve different problems and work best together.
+
+CinderOS ships sbctl and TPM tooling, but only the user can decide when to create,
+enroll, or rotate Secure Boot keys for a real machine.
+MESSAGE
+}
+
+case "$cmd" in
+  status)
+    status
+    ;;
+  prepare)
+    prepare
+    ;;
+  create-keys)
+    create_keys
+    ;;
+  sign)
+    sign_files
+    ;;
+  verify)
+    verify
+    ;;
+  enroll)
+    enroll
+    ;;
+  explain)
+    explain
+    ;;
+  *)
+    echo "Usage: cinder-secureboot [status|prepare|create-keys|sign|verify|enroll|explain]" >&2
+    exit 2
+    ;;
+esac

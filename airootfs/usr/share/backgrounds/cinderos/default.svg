@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" shape-rendering="crispEdges">
+  <rect width="1920" height="1080" fill="#151515"/>
+  <g opacity=".38" fill="#242424">
+    <path d="M0 0h1920v1080H0z"/>
+    <path d="M0 0h1920v24H0zm0 96h1920v24H0zm0 192h1920v24H0zm0 192h1920v24H0zm0 192h1920v24H0zm0 192h1920v24H0zm0 192h1920v24H0z"/>
+    <path d="M0 0h24v1080H0zm96 0h24v1080H96zm192 0h24v1080h-24zm192 0h24v1080h-24zm192 0h24v1080h-24zm192 0h24v1080h-24zm192 0h24v1080h-24zm192 0h24v1080h-24zm192 0h24v1080h-24zm192 0h24v1080h-24zm192 0h24v1080h-24z"/>
+  </g>
+  <rect x="0" y="720" width="1920" height="360" fill="#101010"/>
+  <g>
+    <rect x="168" y="648" width="96" height="72" fill="#2f2f2f"/>
+    <rect x="288" y="576" width="144" height="144" fill="#242424"/>
+    <rect x="456" y="624" width="96" height="96" fill="#2f2f2f"/>
+    <rect x="600" y="504" width="168" height="216" fill="#242424"/>
+    <rect x="792" y="600" width="120" height="120" fill="#2f2f2f"/>
+    <rect x="960" y="456" width="192" height="264" fill="#242424"/>
+    <rect x="1176" y="576" width="144" height="144" fill="#2f2f2f"/>
+    <rect x="1368" y="528" width="168" height="192" fill="#242424"/>
+    <rect x="1584" y="648" width="120" height="72" fill="#2f2f2f"/>
+    <rect x="624" y="528" width="24" height="24" fill="#ff7a1a"/>
+    <rect x="696" y="528" width="24" height="24" fill="#ff9f3f"/>
+    <rect x="984" y="480" width="24" height="24" fill="#ff7a1a"/>
+    <rect x="1080" y="480" width="24" height="24" fill="#ff9f3f"/>
+    <rect x="1392" y="552" width="24" height="24" fill="#ff7a1a"/>
+    <rect x="1464" y="552" width="24" height="24" fill="#ff9f3f"/>
+    <rect x="336" y="624" width="24" height="24" fill="#8a8a8a"/>
+    <rect x="504" y="672" width="24" height="24" fill="#8a8a8a"/>
+    <rect x="1200" y="624" width="24" height="24" fill="#8a8a8a"/>
+  </g>
+  <g>
+    <rect x="820" y="210" width="280" height="280" fill="#101010"/>
+    <rect x="860" y="170" width="200" height="40" fill="#ff7a1a"/>
+    <rect x="780" y="250" width="40" height="160" fill="#ff7a1a"/>
+    <rect x="1100" y="250" width="40" height="160" fill="#ff7a1a"/>
+    <rect x="860" y="490" width="200" height="40" fill="#ff7a1a"/>
+    <rect x="900" y="250" width="120" height="40" fill="#ff9f3f"/>
+    <rect x="880" y="310" width="160" height="80" fill="#ff7a1a"/>
+    <rect x="920" y="410" width="80" height="40" fill="#ff9f3f"/>
+    <rect x="940" y="330" width="40" height="40" fill="#151515"/>
+  </g>
+  <text x="960" y="625" fill="#f2e7d5" font-family="monospace" font-size="46" text-anchor="middle" letter-spacing="4">CINDEROS</text>
+  <text x="960" y="676" fill="#ff9f3f" font-family="monospace" font-size="24" text-anchor="middle" letter-spacing="5">EMBER</text>
+</svg>

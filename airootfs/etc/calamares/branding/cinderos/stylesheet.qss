@@ -1,0 +1,102 @@
+﻿QWidget {
+  background: #151515;
+  color: #f2e7d5;
+  font-family: "JetBrainsMono Nerd Font", "Fira Code", "Noto Sans";
+  font-size: 10.5pt;
+}
+
+#sidebarApp {
+  background: #101010;
+  color: #f2e7d5;
+  border-right: 1px solid #3a3a3a;
+}
+
+#sidebarApp QLabel {
+  color: #f2e7d5;
+}
+
+QLabel {
+  color: #f2e7d5;
+}
+
+QLabel#logo {
+  margin: 14px;
+}
+
+QPushButton {
+  background: #242424;
+  color: #f2e7d5;
+  border: 1px solid #ff7a1a;
+  border-radius: 3px;
+  padding: 8px 18px;
+  min-height: 26px;
+}
+
+QPushButton:hover {
+  background: #2f2f2f;
+  border-color: #ff9f3f;
+}
+
+QPushButton:pressed {
+  background: #ff7a1a;
+  color: #151515;
+}
+
+QPushButton:disabled {
+  background: #202020;
+  color: #8a8a8a;
+  border-color: #3a3a3a;
+}
+
+QLineEdit,
+QComboBox,
+QSpinBox,
+QTextEdit,
+QPlainTextEdit {
+  background: #242424;
+  color: #f2e7d5;
+  border: 1px solid #3a3a3a;
+  border-radius: 3px;
+  padding: 5px;
+  selection-background-color: #ff7a1a;
+  selection-color: #151515;
+}
+
+QListView,
+QTreeView,
+QTableView {
+  background: #151515;
+  color: #f2e7d5;
+  border: 1px solid #3a3a3a;
+  alternate-background-color: #202020;
+}
+
+QProgressBar {
+  background: #151515;
+  border: 1px solid #3a3a3a;
+  border-radius: 3px;
+  color: #f2e7d5;
+  text-align: center;
+}
+
+QProgressBar::chunk {
+  background: #ff7a1a;
+}
+
+QCheckBox,
+QRadioButton {
+  color: #f2e7d5;
+  spacing: 8px;
+}
+
+QTabBar::tab {
+  background: #242424;
+  color: #f2e7d5;
+  border: 1px solid #3a3a3a;
+  padding: 8px 14px;
+}
+
+QTabBar::tab:selected {
+  background: #ff7a1a;
+  color: #151515;
+}

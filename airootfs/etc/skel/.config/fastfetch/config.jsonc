@@ -1,0 +1,32 @@
+{
+  "logo": {
+    "type": "file",
+    "source": "/usr/share/cinderos/rice/cinderos-pixel.txt",
+    "color": {
+      "1": "38;2;255;122;26",
+      "2": "38;2;242;231;213",
+      "3": "38;2;138;138;138"
+    }
+  },
+  "display": {
+    "separator": " :: ",
+    "color": "38;2;255;122;26"
+  },
+  "modules": [
+    "title",
+    "separator",
+    "os",
+    "kernel",
+    "uptime",
+    "packages",
+    "shell",
+    "de",
+    "wm",
+    "terminal",
+    "cpu",
+    "gpu",
+    "memory",
+    "disk",
+    "colors"
+  ]
+}
