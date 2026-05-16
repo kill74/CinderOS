@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=CinderOS Security
-Comment=Open security settings
+Comment=Check firewall, AppArmor, SSH, and audit tools
 Exec=cinder-control --page security
 Icon=security-high
 Terminal=false

@@ -1,0 +1,228 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+fullstack_packages=(
+  nodejs
+  npm
+  pnpm
+  python-pip
+  python-pipx
+  python-poetry
+  rustup
+  go
+  jdk-openjdk
+  sqlite
+  postgresql
+  redis
+  direnv
+  httpie
+  hurl
+  docker
+  docker-compose
+  docker-buildx
+  git
+  github-cli
+  neovim
+  tmux
+)
+
+usage() {
+  cat <<'EOF'
+Usage: cinder-dev COMMAND
+
+Commands:
+  status      Show full-stack tool, editor, shell, Docker, and database status.
+  fullstack   Install the full-stack package set without enabling services.
+  docker      Enable Docker and add your user to the docker group.
+  db          Show PostgreSQL, Redis, and SQLite status without enabling them.
+  help        Show this help.
+EOF
+}
+
+have() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+line() {
+  local name="$1"
+  local state="$2"
+  local detail="${3:-}"
+
+  if [[ -n "$detail" ]]; then
+    printf '  %-18s %-10s %s\n' "$name" "$state" "$detail"
+  else
+    printf '  %-18s %s\n' "$name" "$state"
+  fi
+}
+
+version_line() {
+  local name="$1"
+  local command_name="$2"
+  shift 2
+  local detail
+
+  if have "$command_name"; then
+    detail="$("$command_name" "$@" 2>&1 | sed -n '1p' || true)"
+    [[ -n "$detail" ]] || detail="installed"
+    line "$name" "installed" "$detail"
+  else
+    line "$name" "missing"
+  fi
+}
+
+service_line() {
+  local name="$1"
+  local unit="$2"
+  local active="unknown"
+  local enabled="unknown"
+
+  if have systemctl; then
+    active="$(systemctl is-active "$unit" 2>/dev/null || true)"
+    enabled="$(systemctl is-enabled "$unit" 2>/dev/null || true)"
+  fi
+
+  line "$name" "$active" "enabled: $enabled"
+}
+
+group_line() {
+  local group="$1"
+  local target_user="${SUDO_USER:-${USER:-}}"
+
+  if [[ -z "$target_user" ]]; then
+    line "$group group" "unknown" "no login user found"
+    return
+  fi
+
+  if id -nG "$target_user" 2>/dev/null | grep -qw "$group"; then
+    line "$group group" "ready" "$target_user is a member"
+  else
+    line "$group group" "missing" "$target_user is not a member"
+  fi
+}
+
+editor_line() {
+  local editor="${EDITOR:-}"
+
+  if [[ -n "$editor" ]]; then
+    line "Editor" "set" "$editor"
+    return
+  fi
+
+  for candidate in codium code nvim vim nano; do
+    if have "$candidate"; then
+      line "Editor" "found" "$candidate"
+      return
+    fi
+  done
+
+  line "Editor" "missing" "set EDITOR or install one"
+}
+
+shell_line() {
+  local shell_name="${SHELL:-unknown}"
+  line "Shell" "active" "$shell_name"
+}
+
+project_line() {
+  local project_dir="${CINDEROS_PROJECTS_DIR:-$HOME/Projects}"
+
+  if [[ -d "$project_dir" ]]; then
+    line "Projects" "ready" "$project_dir"
+  else
+    line "Projects" "missing" "$project_dir"
+  fi
+}
+
+db_status() {
+  echo "Databases"
+  service_line "PostgreSQL" "postgresql.service"
+  service_line "Redis" "redis.service"
+  version_line "SQLite" "sqlite3" --version
+  echo
+  echo "PostgreSQL and Redis stay disabled until you enable them yourself."
+}
+
+show_status() {
+  echo "CinderOS dev status"
+  echo
+  echo "Runtimes and tools"
+  version_line "Node" "node" --version
+  version_line "npm" "npm" --version
+  version_line "pnpm" "pnpm" --version
+  version_line "Python" "python" --version
+  version_line "pip" "pip" --version
+  version_line "pipx" "pipx" --version
+  version_line "Poetry" "poetry" --version
+  version_line "Rustup" "rustup" --version
+  version_line "Go" "go" version
+  version_line "Java" "java" --version
+  version_line "Git" "git" --version
+  version_line "GitHub CLI" "gh" --version
+  version_line "direnv" "direnv" version
+  version_line "HTTPie" "http" --version
+  version_line "hurl" "hurl" --version
+  echo
+  echo "Local work"
+  editor_line
+  shell_line
+  project_line
+  echo
+  echo "Containers"
+  version_line "Docker" "docker" --version
+  service_line "Docker service" "docker.service"
+  group_line "docker"
+  echo
+  db_status
+}
+
+install_fullstack() {
+  if ! have pacman; then
+    echo "pacman is not available on this system." >&2
+    exit 1
+  fi
+
+  sudo pacman -S --needed "${fullstack_packages[@]}"
+  mkdir -p "${CINDEROS_PROJECTS_DIR:-$HOME/Projects}"
+
+  echo "Full-stack packages are installed."
+  echo "Docker, PostgreSQL, and Redis were not enabled."
+}
+
+enable_docker() {
+  local target_user="${SUDO_USER:-${USER:-}}"
+
+  if [[ -z "$target_user" ]]; then
+    echo "Could not find the login user to add to the docker group." >&2
+    exit 1
+  fi
+
+  sudo systemctl enable --now docker.service
+  sudo usermod -aG docker "$target_user"
+
+  echo "Docker is enabled for $target_user."
+  echo "Log out and back in before running Docker without sudo."
+}
+
+command_name="${1:-status}"
+case "$command_name" in
+  status)
+    show_status
+    ;;
+  fullstack)
+    install_fullstack
+    ;;
+  docker)
+    enable_docker
+    ;;
+  db)
+    db_status
+    ;;
+  help | --help | -h)
+    usage
+    ;;
+  *)
+    echo "Unknown command: $command_name" >&2
+    usage >&2
+    exit 2
+    ;;
+esac

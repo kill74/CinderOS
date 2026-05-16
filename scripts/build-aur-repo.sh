@@ -7,7 +7,7 @@ package_list="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/packages.aur"
 mkdir -p "$repo_dir"
 
 cat <<'MESSAGE'
-Recommended AUR workflow:
+AUR package steps:
 
 1. Build packages from packages.aur in a clean chroot.
 2. Copy built .pkg.tar.zst files into $CINDEROS_AUR_REPO.
@@ -18,4 +18,4 @@ The script intentionally does not run arbitrary PKGBUILDs automatically.
 MESSAGE
 
 echo "AUR package list: $package_list"
-echo "Target repo directory: $repo_dir"
+echo "Repo directory: $repo_dir"

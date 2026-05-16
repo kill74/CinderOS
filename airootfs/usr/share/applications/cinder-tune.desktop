@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=CinderOS Tune
-Comment=Switch power and memory profiles
+Comment=Open power and memory modes
 Exec=kitty -e cinder-tune status
 Icon=preferences-system-performance
 Terminal=false

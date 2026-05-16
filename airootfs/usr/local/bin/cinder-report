@@ -1,0 +1,194 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cmd="${1:-save}"
+
+state_home="${XDG_STATE_HOME:-$HOME/.local/state}"
+report_dir="${CINDEROS_REPORT_DIR:-$state_home/cinderos/reports}"
+
+have() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+section() {
+  printf '\n== %s ==\n' "$1"
+}
+
+run() {
+  local title="$1"
+  shift
+  section "$title"
+  if "$@"; then
+    return 0
+  fi
+  printf 'Could not run:'
+  printf ' %q' "$@"
+  printf '\n'
+}
+
+service_line() {
+  local service="$1"
+  local active enabled
+  active="$(systemctl is-active "$service" 2>/dev/null || true)"
+  enabled="$(systemctl is-enabled "$service" 2>/dev/null || true)"
+  printf '  %-34s active=%-10s enabled=%s\n' "$service" "${active:-unknown}" "${enabled:-unknown}"
+}
+
+service_snapshot() {
+  section "Services"
+  for service in \
+    NetworkManager.service \
+    ufw.service \
+    apparmor.service \
+    earlyoom.service \
+    greetd.service \
+    power-profiles-daemon.service \
+    switcheroo-control.service \
+    docker.service \
+    bluetooth.service \
+    cups.service \
+    fwupd.service \
+    sshd.service \
+    fail2ban.service \
+    usbguard.service \
+    clamav-daemon.service \
+    clamav-freshclam.service \
+    auditd.service \
+    snapper-timeline.timer \
+    snapper-cleanup.timer \
+    snapper-boot.timer \
+    grub-btrfsd.service \
+    btrfsmaintenance-refresh.path; do
+    service_line "$service"
+  done
+}
+
+safe_file_head() {
+  local file="$1"
+  local lines="${2:-80}"
+  if [[ -r "$file" ]]; then
+    sed -n "1,${lines}p" "$file"
+  else
+    printf 'Could not read: %s\n' "$file"
+  fi
+}
+
+report_body() {
+  printf 'CinderOS diagnostic report\n'
+  printf 'Generated: %s\n' "$(date -Is 2>/dev/null || date)"
+  printf 'User: %s\n' "${USER:-unknown}"
+  printf 'Host: %s\n' "$(hostname 2>/dev/null || printf unknown)"
+  printf 'Note: review this file before sharing it.\n'
+
+  section "Mode"
+  if [[ -d /run/archiso ]]; then
+    printf 'Live ISO: yes\n'
+  else
+    printf 'Live ISO: no\n'
+  fi
+  if [[ -x /usr/local/bin/cinder-install ]]; then
+    printf 'Installer command: present\n'
+  else
+    printf 'Installer command: absent\n'
+  fi
+
+  run "OS Release" safe_file_head /etc/os-release 80
+  run "Kernel" uname -a
+
+  section "Kernel Command Line"
+  safe_file_head /proc/cmdline 20
+
+  section "Session"
+  printf 'XDG session type: %s\n' "${XDG_SESSION_TYPE:-unknown}"
+  printf 'Desktop session: %s\n' "${DESKTOP_SESSION:-unknown}"
+  if have cinder-session-mode; then
+    cinder-session-mode status || true
+  else
+    printf 'cinder-session-mode: missing\n'
+  fi
+  if have loginctl; then
+    loginctl show-session "${XDG_SESSION_ID:-self}" -p Type -p Desktop -p Remote -p State 2>/dev/null || true
+  fi
+
+  run "CPU" sh -c 'lscpu 2>/dev/null | sed -n "1,40p"'
+  run "Memory" sh -c 'free -h 2>/dev/null || awk "/MemTotal|MemAvailable|SwapTotal|SwapFree/ { print }" /proc/meminfo'
+  run "Memory Pressure" sh -c 'if [ -r /proc/pressure/memory ]; then cat /proc/pressure/memory; else echo "PSI unavailable"; fi'
+  run "Swap" sh -c 'swapon --show 2>/dev/null || true'
+  run "Zram" sh -c 'if command -v zramctl >/dev/null 2>&1; then zramctl; else echo "zramctl unavailable"; fi'
+
+  run "Graphics" sh -c 'lspci 2>/dev/null | grep -Ei "vga|3d|display" || true'
+  run "Vulkan" sh -c 'if command -v vulkaninfo >/dev/null 2>&1; then vulkaninfo --summary; else echo "vulkaninfo unavailable"; fi'
+  run "OpenGL" sh -c 'if command -v glxinfo >/dev/null 2>&1; then glxinfo -B; else echo "glxinfo unavailable"; fi'
+
+  run "Root Filesystem" sh -c 'findmnt /; echo; df -hP /'
+  run "Block Devices" sh -c 'lsblk -o NAME,SIZE,TYPE,FSTYPE,FSVER,LABEL,MOUNTPOINTS,MODEL 2>/dev/null || true'
+  run "Boot Files" sh -c 'ls -lah /boot 2>/dev/null | sed -n "1,80p" || true'
+  run "GRUB Entries" sh -c 'if [ -r /boot/grub/grub.cfg ]; then grep -Ei "menuentry|linux-lts|snapper|snapshot" /boot/grub/grub.cfg | sed -n "1,120p"; else echo "/boot/grub/grub.cfg unavailable"; fi'
+
+  service_snapshot
+
+  run "Failed Services" sh -c 'systemctl --failed --no-pager 2>/dev/null || true'
+  run "Cinder Doctor" sh -c 'if command -v cinder-doctor >/dev/null 2>&1; then cinder-doctor || true; else echo "cinder-doctor missing"; fi'
+  run "Cinder Memory" sh -c 'if command -v cinder-memory >/dev/null 2>&1; then cinder-memory status; else echo "cinder-memory missing"; fi'
+  run "Cinder Security" sh -c 'if command -v cinder-security >/dev/null 2>&1; then cinder-security status; else echo "cinder-security missing"; fi'
+  run "Cinder Snapshots" sh -c 'if command -v cinder-snapshot >/dev/null 2>&1; then cinder-snapshot status; else echo "cinder-snapshot missing"; fi'
+
+  section "Pacman"
+  if have pacman; then
+    pacman -Q linux linux-zen linux-lts linux-firmware mesa vulkan-radeon vulkan-intel nvidia-dkms nvidia-utils 2>/dev/null || true
+    if [[ -e /var/lib/pacman/db.lck ]]; then
+      printf 'Pacman lock: present at /var/lib/pacman/db.lck\n'
+    else
+      printf 'Pacman lock: absent\n'
+    fi
+  else
+    printf 'pacman unavailable\n'
+  fi
+
+  section "Recent Pacman Errors"
+  if [[ -r /var/log/pacman.log ]]; then
+    grep -Ei 'error|failed|warning' /var/log/pacman.log | tail -n 80 || true
+  else
+    printf '/var/log/pacman.log unavailable\n'
+  fi
+
+  run "Recent Boot Warnings" sh -c 'journalctl -b -p warning --no-pager 2>/dev/null | tail -n 160 || true'
+}
+
+save_report() {
+  mkdir -p "$report_dir"
+  local report="$report_dir/cinder-report-$(date +%Y%m%d-%H%M%S).txt"
+  report_body >"$report"
+  printf 'Saved diagnostics to %s\n' "$report"
+  printf '\nPreview:\n'
+  sed -n '1,220p' "$report"
+}
+
+usage() {
+  cat <<'MESSAGE'
+Usage:
+  cinder-report save      Save a dated diagnostic report
+  cinder-report print     Print the report to stdout
+  cinder-report path      Show the report directory
+  cinder-report help      Show this help
+MESSAGE
+}
+
+case "$cmd" in
+  save|"")
+    save_report
+    ;;
+  print)
+    report_body
+    ;;
+  path)
+    printf '%s\n' "$report_dir"
+    ;;
+  help|-h|--help)
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac

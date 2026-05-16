@@ -1,9 +1,46 @@
 # Known Issues
 
+These are the checks still left before an ISO is worth sharing.
+
+## Build Host
+
 - Build and package verification require an Arch-based host.
-- AUR packages must be built into a local repo before `mkarchiso`, or installed after setup with `paru`.
-- Full install testing should cover live boot, Btrfs erase-disk install, manual partitioning, LUKS2, UEFI, BIOS, and installed login.
-- AMD, Intel, and NVIDIA graphics paths need separate hardware checks.
-- Daily-driver use should be limited to installs with tested backup, Linux LTS boot, first update, and rollback.
+- `scripts/verify-arch-packages.sh` needs pacman sync databases and will not run on a Windows-only host.
+
+## AUR Packages
+
+- `packages.aur` is not consumed directly by `mkarchiso`.
+- Build those packages in a clean chroot and serve them from a local repo, or install them after setup with `paru`.
+
+## Install QA
+
+Test these cases in a VM before publishing an ISO:
+
+- Live boot to COSMIC.
+- Btrfs erase-disk install.
+- Manual partitioning.
+- LUKS2 encryption.
+- GRUB install on UEFI and BIOS.
+- Installed login through `greetd`.
+- Post-install cleanup of live-only sudo and installer launchers.
+- First update through `sudo cinder-update`.
+- Booting both Linux Zen and Linux LTS.
+- Snapshot entries visible from GRUB after `sudo cinder-snapshot setup`.
+
+## Hardware QA
+
+- Test AMD, Intel, and NVIDIA graphics paths separately.
+- Make sure `cinder-hardware-setup` does not write vendor-specific settings for hardware that is not present.
+- For now, treat AMD and Intel graphics as the safest daily-driver path.
 - NVIDIA installs need extra testing around kernel updates, suspend, and Wayland before daily use.
-- Secure Boot enrollment and USBGuard enablement are manual steps.
+
+## Daily Driver QA
+
+- External backup and restore media must be tested before replacing another OS.
+- Rollback must be tested in a VM before relying on it on a real machine.
+- Resolve `cinder-doctor` warnings before moving personal files onto the install.
+
+## Manual Security Steps
+
+- Secure Boot key creation and enrollment are intentionally manual.
+- USBGuard should not be enabled until the policy it writes has been reviewed.

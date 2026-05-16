@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=CinderOS Start
-Comment=Open the CinderOS Start page
+Comment=Open first-run checks and common tools
 Exec=cinder-control --page welcome
 Icon=cinderos-logo
 Terminal=false

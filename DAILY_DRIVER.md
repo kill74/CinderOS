@@ -1,6 +1,6 @@
 # Daily Driver Checklist
 
-CinderOS can be used like a normal Arch workstation, but do not replace a working OS until recovery has been tested. The target path for this release is AMD or Intel graphics, Btrfs, snapshots, and normal `pacman` updates through `cinder-update`.
+CinderOS can be a normal Arch workstation, but prove recovery before it replaces a working OS. For this release, stay on the safer path: AMD or Intel graphics, Btrfs, snapshots, and normal `pacman` updates through `cinder-update`.
 
 ## Before Install
 
@@ -23,11 +23,13 @@ Run these on the installed system before moving your main files over:
 ```bash
 cinder-doctor
 sudo cinder-hardware-setup
+cinder-dev status
+cinder-game-check
 cinder-memory status
 cinder-security status
 ```
 
-Fix warnings from `cinder-doctor` before treating the install as trusted.
+Fix `cinder-doctor` warnings before trusting the install.
 
 ## Backups And Rollback
 
@@ -52,7 +54,7 @@ ls /boot/vmlinuz-linux-zen /boot/vmlinuz-linux-lts
 sudo grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
-Reboot once into the default kernel and once into Linux LTS before calling the install ready.
+Reboot once into the default kernel and once into Linux LTS before you trust the install.
 
 ## First Update
 
@@ -64,9 +66,21 @@ sudo cinder-update
 
 This creates a pre-update snapshot when Snapper is configured, runs `pacman -Syu`, rebuilds GRUB when available, and runs `cinder-doctor` afterward.
 
+## Personal Restore
+
+Use the local restore helper for dotfiles you choose to keep:
+
+```bash
+cinder-personal save
+cinder-personal list
+cinder-personal restore
+```
+
+It leaves out SSH keys, browser data, token stores, password managers, and cloud credentials.
+
 ## Stop Criteria
 
-Do not replace the current OS if any of these are still untested:
+Do not replace the current OS while any of these are still untested:
 
 - External restore path.
 - VM install.
@@ -74,4 +88,5 @@ Do not replace the current OS if any of these are still untested:
 - GRUB snapshot entries.
 - Boot into Linux LTS.
 - First update through `cinder-update`.
+- Personal files and dotfiles restored from a backup you trust.
 - Rollback path in a VM.

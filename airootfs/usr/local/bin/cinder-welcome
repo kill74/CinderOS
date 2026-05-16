@@ -34,7 +34,7 @@ show_start() {
    cinder-install                  Open the installer
    cinder-welcome commands         Show the full command reference
 
- Good first checks:
+ First checks:
    cinder-hardware-setup           Check graphics hardware
    cinder-memory status            Show RAM, zram, swap, pressure
    cinder-security status          Show firewall, AppArmor, disk, updates
@@ -46,13 +46,17 @@ MESSAGE
    cinder-control --page welcome   Open the Start page
    cinder-welcome commands         Show the full command reference
 
- Good first steps:
+ First steps:
    cinder-rice apply               Apply appearance defaults
-   cinder-doctor                   Check installed system readiness
+   cinder-doctor                   Check whether this install is ready
+   cinder-report save              Save a diagnostic report
+   cinder-dev status               Check local coding tools
+   cinder-game-check               Check Steam, Proton, graphics, and audio
+   cinder-personal save            Save selected dotfiles locally
    cinder-hardware-setup           Check graphics hardware
    cinder-memory low-idle          Apply memory defaults
    cinder-snapshot setup           Set up backups
-   sudo cinder-update              Update with snapshot support
+   sudo cinder-update              Update with a snapshot when set up
    cinder-security status          Show firewall, AppArmor, disk, updates
 MESSAGE
   fi
@@ -61,8 +65,9 @@ MESSAGE
 
  Desktop defaults:
    COSMIC Wayland by default, XFCE Lite optional
-   zram + earlyoom memory profile
-   Steam, Wine, GameMode, MangoHud, Vulkan tooling
+   zram + earlyoom memory mode
+   Steam, Proton, Wine, GameMode, MangoHud, Vulkan tools
+   Node, Python, Rust, Go, Java, Docker, PostgreSQL, Redis
    Firewall and AppArmor enabled
 
 ================================================================
@@ -86,6 +91,8 @@ MESSAGE
  Control center:
    cinder-control --page welcome   Open the Start page
    cinder-control --page status    Open system status
+   cinder-control --page dev       Open development settings
+   cinder-control --page games     Open game settings
    cinder-control --page appearance  Open appearance settings
    cinder-control --page memory    Open memory settings
    cinder-control --page security  Open security settings
@@ -102,19 +109,28 @@ MESSAGE
    cinder-session-mode cosmic      Use COSMIC by default
 
  Tuning:
-   cinder-tune performance         Set performance profile
-   cinder-tune balanced            Set default profile
-   cinder-tune quiet               Set quiet profile
-   cinder-tune status              Show current power profile
+   cinder-tune performance         Set performance mode
+   cinder-tune balanced            Set default mode
+   cinder-tune quiet               Set quiet mode
+   cinder-tune status              Show current power mode
 
  Hardware and recovery:
    cinder-hardware-setup           Check graphics hardware
-   cinder-doctor                   Check installed system readiness
-   sudo cinder-update              Update with snapshot support
+   cinder-doctor                   Check whether this install is ready
+   cinder-report save              Save a diagnostic report
+   sudo cinder-update              Update with a snapshot when set up
    cinder-snapshot setup           Set up Snapper and grub-btrfs
    cinder-snapshot create          Create a manual Btrfs snapshot
    cinder-refresh-mirrors          Refresh pacman mirrors with reflector
    cinder-setup-flatpak.sh         Enable Flathub
+
+ Development:
+   cinder-dev status               Show runtimes, Docker, databases, editor
+   cinder-dev fullstack            Install full-stack packages
+   cinder-dev docker               Enable Docker for your user
+   cinder-dev db                   Show database services without enabling them
+   cinder-personal save            Save selected dotfiles locally
+   cinder-personal restore         Restore the latest local dotfile backup
 
  Security:
    cinder-security status          Show firewall, AppArmor, disk, updates
@@ -126,10 +142,11 @@ MESSAGE
    cinder-secureboot prepare       Show sbctl Secure Boot steps
    cinder-sandbox list             Show sandbox launchers
 
- Optional setup:
+ When you want them:
    cinder-enable-services.sh       Enable workstation services
    cinder-setup-docker.sh          Add your user to Docker
    cinder-setup-gamemode.sh        Add your user to GameMode
+   cinder-game-check               Check Steam, Proton, graphics, controllers
    cinder-setup-proton.sh          Install Proton GE through paru
    cinder-install-vencord.sh       Run the Vencord installer
    cinder-setup-zsh.sh             Switch to zsh and install Oh My Zsh
@@ -139,10 +156,11 @@ MESSAGE
    Terminal                        kitty / cosmic-term / xfce4-terminal
    Shell                           zsh with starship and zoxide
    Audio                           PipeWire + WirePlumber
-   Filesystem target               Btrfs with zstd compression
-   Idle profile                    zram + earlyoom, heavy services off
+   Filesystem                      Btrfs with zstd compression
+   Idle mode                       zram + earlyoom, heavy services off
    Appearance                      CinderOS dark theme and wallpaper
-   Games                           Steam, Wine, GameMode, MangoHud, Vulkan
+   Development                     Node, Python, Rust, Go, Java, Docker tools
+   Games                           Steam, Proton, Wine, overlays, Vulkan
 
 ================================================================
 MESSAGE

@@ -1,0 +1,176 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: cinder-game-check [--help]
+
+Reports Steam, Proton, GameMode, MangoHud, Gamescope, Vulkan, GPU,
+controller, and audio state without changing the system.
+EOF
+}
+
+have() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+line() {
+  local name="$1"
+  local state="$2"
+  local detail="${3:-}"
+
+  if [[ -n "$detail" ]]; then
+    printf '  %-18s %-10s %s\n' "$name" "$state" "$detail"
+  else
+    printf '  %-18s %s\n' "$name" "$state"
+  fi
+}
+
+tool_line() {
+  local name="$1"
+  local command_name="$2"
+  shift 2
+  local detail
+
+  if have "$command_name"; then
+    detail="$("$command_name" "$@" 2>&1 | sed -n '1p' || true)"
+    [[ -n "$detail" ]] || detail="installed"
+    line "$name" "installed" "$detail"
+  else
+    line "$name" "missing"
+  fi
+}
+
+package_line() {
+  local name="$1"
+  local package="$2"
+
+  if have pacman && pacman -Q "$package" >/dev/null 2>&1; then
+    line "$name" "installed" "$(pacman -Q "$package" 2>/dev/null)"
+  else
+    line "$name" "missing"
+  fi
+}
+
+service_line() {
+  local name="$1"
+  local unit="$2"
+  local state="unknown"
+  local system_state
+
+  if have systemctl; then
+    state="$(systemctl --user is-active "$unit" 2>/dev/null || true)"
+    if [[ "$state" != "active" ]]; then
+      system_state="$(systemctl is-active "$unit" 2>/dev/null || true)"
+      if [[ "$system_state" == "active" || -z "$state" ]]; then
+        state="$system_state"
+      fi
+    fi
+  fi
+
+  [[ -n "$state" ]] || state="unknown"
+  line "$name" "$state"
+}
+
+proton_ge_line() {
+  local paths=(
+    "$HOME/.steam/root/compatibilitytools.d"
+    "$HOME/.steam/steam/compatibilitytools.d"
+    "$HOME/.local/share/Steam/compatibilitytools.d"
+  )
+  local path
+
+  for path in "${paths[@]}"; do
+    if compgen -G "$path/GE-Proton*" >/dev/null 2>&1; then
+      line "Proton GE" "installed" "$path"
+      return
+    fi
+  done
+
+  line "Proton GE" "missing" "run cinder-setup-proton.sh when you want it"
+}
+
+controller_line() {
+  local devices=()
+  local device
+
+  for device in /dev/input/js* /dev/input/event*; do
+    [[ -e "$device" ]] || continue
+    devices+=("$device")
+  done
+
+  if ((${#devices[@]} > 0)); then
+    line "Controllers" "detected" "${devices[0]}"
+  else
+    line "Controllers" "not found" "plug one in, then rerun this check"
+  fi
+}
+
+audio_line() {
+  if have pactl; then
+    line "Audio" "ready" "$(pactl info 2>/dev/null | sed -n 's/^Server Name: //p' | sed -n '1p')"
+  elif have wpctl; then
+    line "Audio" "ready" "$(wpctl status 2>/dev/null | sed -n '1p')"
+  else
+    line "Audio" "unknown" "pactl or wpctl is not installed"
+  fi
+}
+
+gpu_line() {
+  if have lspci; then
+    lspci | grep -Ei 'vga|3d|display' | sed 's/^/  GPU              /'
+  else
+    line "GPU" "unknown" "lspci is not installed"
+  fi
+}
+
+vulkan_line() {
+  if have vulkaninfo; then
+    vulkaninfo --summary 2>/dev/null | sed -n '1,12p' | sed 's/^/  /'
+  else
+    line "Vulkan" "missing" "install vulkan-tools"
+  fi
+}
+
+opengl_line() {
+  if have glxinfo; then
+    glxinfo -B 2>/dev/null | sed -n '1,10p' | sed 's/^/  /'
+  else
+    line "OpenGL" "missing" "install mesa-utils"
+  fi
+}
+
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  usage
+  exit 0
+fi
+
+echo "CinderOS game check"
+echo
+echo "Steam and Proton"
+tool_line "Steam" "steam" --version
+package_line "Steam runtime" "steam-native-runtime"
+proton_ge_line
+echo
+echo "Performance"
+tool_line "GameMode" "gamemoderun" --version
+service_line "GameMode user" "gamemoded.service"
+tool_line "Gamescope" "gamescope" --version
+echo
+echo "Overlays"
+tool_line "MangoHud" "mangohud" --version
+tool_line "GOverlay" "goverlay" --version
+package_line "vkBasalt" "vkbasalt"
+echo
+echo "Controllers and audio"
+controller_line
+audio_line
+echo
+echo "Graphics"
+gpu_line
+echo
+echo "Vulkan"
+vulkan_line
+echo
+echo "OpenGL"
+opengl_line

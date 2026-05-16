@@ -306,7 +306,7 @@ CinderOS balanced security model
 - UFW denies incoming connections by default while allowing normal outbound use.
 - AppArmor is enabled at boot, but profiles stay conservative to avoid breaking Steam, Discord, Docker, or COSMIC.
 - Sysctl hardening limits kernel address leaks, dmesg access, ptrace abuse, unsafe redirects, and unprivileged BPF.
-- Secure Boot tooling is present, but key enrollment is never automatic because firmware mistakes can block booting.
+- Secure Boot tools are present, but key enrollment is never automatic because firmware mistakes can block booting.
 - LUKS is handled by the installer path; it protects data at rest when selected during install.
 - USBGuard is opt-in because a bad policy can block keyboards, mice, docks, or recovery media.
 - SSH is installed but off by default. Enabling it through cinder-security also enables fail2ban and opens the firewall rule.

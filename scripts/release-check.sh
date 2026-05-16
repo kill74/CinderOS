@@ -51,12 +51,16 @@ echo "== Profile validation =="
 bash "$profile_dir/scripts/validate-profile.sh"
 
 echo
+echo "== Code style =="
+bash "$profile_dir/scripts/check-code-style.sh"
+
+echo
 echo "== Visible text =="
 bash "$profile_dir/scripts/check-visible-text.sh"
 
 echo
 echo "== Daily driver guardrails =="
-for tool in cinder-doctor cinder-update; do
+for tool in cinder-doctor cinder-report cinder-update; do
   if [[ ! -f "$profile_dir/airootfs/usr/local/bin/$tool" ]]; then
     echo "Missing daily-driver tool: $tool" >&2
     exit 1

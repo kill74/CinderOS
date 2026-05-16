@@ -24,17 +24,17 @@ QLabel#logo {
 }
 
 QPushButton {
-  background: #242424;
+  background: #202020;
   color: #f2e7d5;
-  border: 1px solid #ff7a1a;
-  border-radius: 3px;
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
   padding: 8px 18px;
   min-height: 26px;
 }
 
 QPushButton:hover {
   background: #2f2f2f;
-  border-color: #ff9f3f;
+  border-color: #ff7a1a;
 }
 
 QPushButton:pressed {
@@ -56,7 +56,7 @@ QPlainTextEdit {
   background: #242424;
   color: #f2e7d5;
   border: 1px solid #3a3a3a;
-  border-radius: 3px;
+  border-radius: 4px;
   padding: 5px;
   selection-background-color: #ff7a1a;
   selection-color: #151515;
@@ -74,7 +74,7 @@ QTableView {
 QProgressBar {
   background: #151515;
   border: 1px solid #3a3a3a;
-  border-radius: 3px;
+  border-radius: 4px;
   color: #f2e7d5;
   text-align: center;
 }
@@ -97,6 +97,7 @@ QTabBar::tab {
 }
 
 QTabBar::tab:selected {
-  background: #ff7a1a;
-  color: #151515;
+  background: #242424;
+  color: #ff9f3f;
+  border-color: #ff7a1a;
 }

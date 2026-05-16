@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=CinderOS Appearance
-Comment=Open appearance settings
+Comment=Wallpaper, terminal, shell, and theme settings
 Exec=cinder-control --page appearance
 Icon=preferences-desktop-theme
 Terminal=false

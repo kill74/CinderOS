@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=CinderOS Backups
-Comment=Manage Btrfs snapshots
+Comment=Set up snapshots and rollback tools
 Exec=cinder-control --page backups
 Icon=drive-harddisk-system
 Terminal=false
