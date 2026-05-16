@@ -4,6 +4,19 @@ set -euo pipefail
 config_name="root"
 config_path="/etc/snapper/configs/${config_name}"
 
+have() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+die() {
+  echo "$*" >&2
+  exit 1
+}
+
+usage() {
+  echo "Usage: cinder-snapshot [setup|create|list|open|status]" >&2
+}
+
 need_root() {
   if [[ "${EUID}" -ne 0 ]]; then
     exec sudo "$0" "$@"
@@ -11,8 +24,8 @@ need_root() {
 }
 
 set_snapper_value() {
-  key="$1"
-  value="$2"
+  local key="$1"
+  local value="$2"
   if grep -Eq "^${key}=" "$config_path"; then
     sed -i "s|^${key}=.*|${key}=\"${value}\"|" "$config_path"
   else
@@ -23,10 +36,7 @@ set_snapper_value() {
 setup_snapper() {
   need_root "$@"
 
-  if ! command -v snapper >/dev/null 2>&1; then
-    echo "snapper is not installed." >&2
-    exit 1
-  fi
+  have snapper || die "snapper is not installed."
 
   if ! findmnt -no FSTYPE / | grep -qx btrfs; then
     echo "Root filesystem is not Btrfs; skipping Snapper setup." >&2
@@ -61,7 +71,7 @@ setup_snapper() {
   systemctl enable btrfs-scrub@-.timer >/dev/null 2>&1 || true
   systemctl enable btrfsmaintenance-refresh.path >/dev/null 2>&1 || true
 
-  if [[ -e /boot/grub/grub.cfg ]] && command -v grub-mkconfig >/dev/null 2>&1; then
+  if [[ -e /boot/grub/grub.cfg ]] && have grub-mkconfig; then
     grub-mkconfig -o /boot/grub/grub.cfg || true
   fi
 
@@ -78,11 +88,11 @@ list_snapshots() {
 }
 
 open_manager() {
-  if command -v btrfs-assistant >/dev/null 2>&1; then
+  if have btrfs-assistant; then
     exec btrfs-assistant
   fi
 
-  if command -v snapper-gui >/dev/null 2>&1; then
+  if have snapper-gui; then
     exec snapper-gui
   fi
 
@@ -111,7 +121,7 @@ case "${1:-status}" in
     fi
     ;;
   *)
-    echo "Usage: cinder-snapshot [setup|create|list|open|status]" >&2
+    usage
     exit 2
     ;;
 esac

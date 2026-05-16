@@ -3,6 +3,19 @@ set -euo pipefail
 
 cmd="${1:-status}"
 
+have() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+die() {
+  echo "$*" >&2
+  exit 1
+}
+
+usage() {
+  echo "Usage: cinder-memory [status|low-idle|gaming|dev|explain|test]" >&2
+}
+
 need_root() {
   if [[ "${EUID}" -ne 0 ]]; then
     exec sudo "$0" "$@"
@@ -19,7 +32,8 @@ start_zram() {
 }
 
 service_line() {
-  service="$1"
+  local service="$1"
+  local active enabled
   active="$(systemctl is-active "$service" 2>/dev/null || true)"
   enabled="$(systemctl is-enabled "$service" 2>/dev/null || true)"
   printf '  %-32s active=%-10s enabled=%s\n' "$service" "${active:-unknown}" "${enabled:-unknown}"
@@ -29,7 +43,7 @@ show_status() {
   echo "CinderOS memory status"
   echo
 
-  if command -v free >/dev/null 2>&1; then
+  if have free; then
     free -h
   else
     awk '/MemTotal|MemAvailable|SwapTotal|SwapFree/ { print }' /proc/meminfo
@@ -41,7 +55,7 @@ show_status() {
 
   echo
   echo "Zram:"
-  if command -v zramctl >/dev/null 2>&1; then
+  if have zramctl; then
     zramctl || true
   else
     echo "  zramctl is unavailable"
@@ -81,7 +95,7 @@ low_idle() {
   systemctl enable --now earlyoom.service >/dev/null 2>&1 || true
   systemctl disable --now docker.service cups.service bluetooth.service fwupd.service systemd-oomd.service sshd.service usbguard.service clamav-daemon.service clamav-freshclam.service fail2ban.service >/dev/null 2>&1 || true
   systemctl disable --now cinder-snapshot-setup.service snapper-timeline.timer snapper-cleanup.timer snapper-boot.timer grub-btrfsd.service btrfsmaintenance-refresh.path btrfs-scrub@-.timer >/dev/null 2>&1 || true
-  echo "CinderOS memory profile: low-idle"
+  echo "CinderOS memory mode: low-idle"
 }
 
 gaming() {
@@ -94,7 +108,7 @@ gaming() {
   apply_sysctl vm.max_map_count 2147483642
   start_zram
   systemctl enable --now earlyoom.service >/dev/null 2>&1 || true
-  echo "CinderOS memory profile: gaming"
+  echo "CinderOS memory mode: gaming"
 }
 
 dev() {
@@ -106,7 +120,7 @@ dev() {
   apply_sysctl vm.dirty_ratio 30
   start_zram
   systemctl enable --now earlyoom.service >/dev/null 2>&1 || true
-  echo "CinderOS memory profile: dev"
+  echo "CinderOS memory mode: dev"
 }
 
 explain() {
@@ -123,10 +137,7 @@ MESSAGE
 }
 
 run_test() {
-  if ! command -v stress-ng >/dev/null 2>&1; then
-    echo "stress-ng is not installed." >&2
-    exit 1
-  fi
+  have stress-ng || die "stress-ng is not installed."
 
   stress-ng --vm 1 --vm-bytes 70% --timeout 30s --metrics-brief
 }
@@ -151,7 +162,7 @@ case "$cmd" in
     run_test
     ;;
   *)
-    echo "Usage: cinder-memory [status|low-idle|gaming|dev|explain|test]" >&2
+    usage
     exit 2
     ;;
 esac

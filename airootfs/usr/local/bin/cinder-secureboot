@@ -61,7 +61,7 @@ status() {
 
 prepare() {
   cat <<'MESSAGE'
-CinderOS Secure Boot workflow
+CinderOS Secure Boot steps
 
 Secure Boot is powerful but firmware-specific. CinderOS never enrolls keys automatically.
 
@@ -131,7 +131,7 @@ Secure Boot protects the boot chain before Linux starts.
 LUKS protects your installed data at rest after the disk is encrypted.
 They solve different problems and work best together.
 
-CinderOS ships sbctl and TPM tooling, but only the user can decide when to create,
+CinderOS ships sbctl and TPM tools, but only the user can decide when to create,
 enroll, or rotate Secure Boot keys for a real machine.
 MESSAGE
 }

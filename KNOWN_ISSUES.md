@@ -1,6 +1,6 @@
 # Known Issues
 
-These are the current checks to finish before treating an ISO as releasable.
+These are the checks still left before an ISO is worth sharing.
 
 ## Build Host
 
@@ -14,7 +14,7 @@ These are the current checks to finish before treating an ISO as releasable.
 
 ## Install QA
 
-Test these paths in a VM before publishing an ISO:
+Test these cases in a VM before publishing an ISO:
 
 - Live boot to COSMIC.
 - Btrfs erase-disk install.
@@ -30,17 +30,17 @@ Test these paths in a VM before publishing an ISO:
 ## Hardware QA
 
 - Test AMD, Intel, and NVIDIA graphics paths separately.
-- Confirm `cinder-hardware-setup` does not write vendor-specific settings for hardware that is not present.
-- Treat AMD and Intel graphics as the daily-driver target for this pass.
+- Make sure `cinder-hardware-setup` does not write vendor-specific settings for hardware that is not present.
+- For now, treat AMD and Intel graphics as the safest daily-driver path.
 - NVIDIA installs need extra testing around kernel updates, suspend, and Wayland before daily use.
 
 ## Daily Driver QA
 
 - External backup and restore media must be tested before replacing another OS.
 - Rollback must be tested in a VM before relying on it on a real machine.
-- `cinder-doctor` warnings should be resolved before moving personal files onto the install.
+- Resolve `cinder-doctor` warnings before moving personal files onto the install.
 
 ## Manual Security Steps
 
 - Secure Boot key creation and enrollment are intentionally manual.
-- USBGuard should not be enabled until its generated policy has been reviewed.
+- USBGuard should not be enabled until the policy it writes has been reviewed.

@@ -112,6 +112,7 @@ nvtop
 
 # Gaming
 steam
+steam-native-runtime
 wine
 wine-mono
 winetricks
@@ -119,6 +120,9 @@ gamemode
 lib32-gamemode
 mangohud
 lib32-mangohud
+gamescope
+goverlay
+mesa-utils
 lib32-gnutls
 lib32-libpulse
 lib32-alsa-plugins
@@ -195,6 +199,21 @@ lazygit
 lazydocker
 neovim
 tmux
+nodejs
+npm
+pnpm
+python-pip
+python-pipx
+python-poetry
+rustup
+go
+jdk-openjdk
+sqlite
+postgresql
+redis
+direnv
+httpie
+hurl
 calamares
 python
 python-cairo

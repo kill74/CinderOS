@@ -81,7 +81,7 @@ EOF
 
 status() {
   echo "CinderOS appearance status"
-  echo "  profile: $display_name"
+  echo "  theme: $display_name"
   echo "  wallpaper: $wallpaper"
   [[ -f "$wallpaper" ]] && echo "  wallpaper file: present" || echo "  wallpaper file: missing"
   [[ -f "$wallpaper_svg" ]] && echo "  wallpaper svg: present" || echo "  wallpaper svg: missing"
@@ -124,12 +124,12 @@ reset_rice() {
 
 explain() {
   cat <<'MESSAGE'
-CinderOS appearance profile
+CinderOS appearance
 
 - Graphite grey keeps the desktop readable.
 - Orange is used for active controls, terminal cursor, prompt accents, and boot highlights.
 - Wallpaper and boot assets are shipped with the ISO.
-- COSMIC gets the full appearance profile; XFCE Lite keeps shared GTK and icon defaults.
+- COSMIC gets the full appearance set; XFCE Lite keeps shared GTK and icon defaults.
 - cinder-rice apply writes user-level dotfiles and COSMIC wallpaper config, with backups under ~/.config/cinderos/rice/backup.
 MESSAGE
 }

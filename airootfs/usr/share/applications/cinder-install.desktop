@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=Install CinderOS
-Comment=Open the installer
+Comment=Start the CinderOS installer
 Exec=cinder-install
 Icon=cinderos-logo
 Terminal=false

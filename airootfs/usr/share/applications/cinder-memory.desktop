@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=CinderOS Memory
-Comment=View memory and zram settings
+Comment=Check RAM, zram, pressure, and quiet services
 Exec=cinder-control --page memory
 Icon=utilities-system-monitor
 Terminal=false

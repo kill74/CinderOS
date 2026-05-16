@@ -8,22 +8,22 @@ Rectangle {
     property var slides: [
         {
             title: "Install CinderOS",
-            body: "Choose language, disk layout, user account, and bootloader.",
+            body: "Pick the disk layout, user account, locale, and bootloader.",
             art: "slides/slide-install.svg"
         },
         {
             title: "Hardware",
-            body: "AMD, Intel, and NVIDIA graphics packages are included.",
+            body: "Graphics tools are included. Test this exact machine before daily use.",
             art: "slides/slide-hardware.svg"
         },
         {
             title: "Work Tools",
-            body: "Neovim, Git, GitHub CLI, Docker, tmux, ripgrep, and shell tools are installed.",
+            body: "Git, Neovim, tmux, ripgrep, and build basics are ready after install.",
             art: "slides/slide-dev.svg"
         },
         {
             title: "Games",
-            body: "Steam, Wine, GameMode, MangoHud, and Vulkan tools are available after install.",
+            body: "Steam, Wine, GameMode, MangoHud, and Vulkan tools are installed for testing.",
             art: "slides/slide-gaming.svg"
         }
     ]
@@ -42,23 +42,43 @@ Rectangle {
         opacity: 0.32
     }
 
+    Rectangle {
+        anchors.centerIn: parent
+        width: Math.min(parent.width * 0.80, 780)
+        height: Math.min(parent.height * 0.78, 540)
+        color: "#151515"
+        opacity: 0.88
+        radius: 4
+        border.color: "#3a3a3a"
+        border.width: 1
+    }
+
     Column {
         anchors.centerIn: parent
-        width: Math.min(parent.width * 0.76, 720)
-        spacing: 22
+        width: Math.min(parent.width * 0.72, 700)
+        spacing: 18
 
         Image {
             source: root.slides[root.index].art
             width: parent.width
-            height: 230
+            height: 220
             fillMode: Image.PreserveAspectFit
+        }
+
+        Text {
+            text: "CinderOS 1.0.0 Ember"
+            color: "#8a8a8a"
+            font.family: "Noto Sans"
+            font.pixelSize: 13
+            horizontalAlignment: Text.AlignHCenter
+            width: parent.width
         }
 
         Text {
             text: root.slides[root.index].title
             color: "#ff9f3f"
             font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: 30
+            font.pixelSize: 28
             font.bold: true
             horizontalAlignment: Text.AlignHCenter
             width: parent.width
@@ -68,7 +88,7 @@ Rectangle {
             text: root.slides[root.index].body
             color: "#f2e7d5"
             font.family: "Noto Sans"
-            font.pixelSize: 17
+            font.pixelSize: 16
             wrapMode: Text.WordWrap
             horizontalAlignment: Text.AlignHCenter
             width: parent.width

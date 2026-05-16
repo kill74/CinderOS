@@ -1,0 +1,170 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+backup_root="${CINDEROS_PERSONAL_DIR:-$HOME/cinderos-personal}"
+items=(
+  ".bashrc"
+  ".zshrc"
+  ".profile"
+  ".gitconfig"
+  ".config/cinderos"
+  ".config/direnv"
+  ".config/kitty"
+  ".config/nvim"
+  ".config/starship.toml"
+  ".config/tmux"
+  ".config/user-dirs.dirs"
+)
+
+usage() {
+  cat <<'EOF'
+Usage: cinder-personal COMMAND [PATH]
+
+Commands:
+  save       Copy selected dotfiles and CinderOS settings into a local backup.
+  restore    Restore the latest backup, or restore from PATH when given.
+  list       Show local backups.
+  path       Print the backup folder.
+  help       Show this help.
+
+This tool keeps secrets out by default. It does not copy SSH keys, browser
+data, token stores, password managers, or cloud credentials.
+EOF
+}
+
+have() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+timestamp() {
+  date +%Y%m%d-%H%M%S
+}
+
+copy_path() {
+  local source="$1"
+  local target="$2"
+
+  if have rsync; then
+    if [[ -d "$source" ]]; then
+      mkdir -p "$target"
+      rsync -a "$source"/ "$target"/
+    else
+      mkdir -p "$(dirname "$target")"
+      rsync -a "$source" "$target"
+    fi
+  elif [[ -d "$source" ]]; then
+    mkdir -p "$target"
+    cp -a "$source"/. "$target"/
+  else
+    mkdir -p "$(dirname "$target")"
+    cp -p "$source" "$target"
+  fi
+}
+
+save_personal() {
+  local stamp
+  local backup_dir
+  local files_dir
+  local item
+  local source
+  local target
+
+  stamp="$(timestamp)"
+  backup_dir="$backup_root/$stamp"
+  files_dir="$backup_dir/files"
+  mkdir -p "$files_dir"
+
+  {
+    echo "CinderOS personal backup"
+    echo "Date: $(date -Is)"
+    echo "Host: $(hostname 2>/dev/null || echo unknown)"
+    echo "User: ${USER:-unknown}"
+    echo
+    echo "Copied files:"
+  } >"$backup_dir/manifest.txt"
+
+  for item in "${items[@]}"; do
+    source="$HOME/$item"
+    target="$files_dir/$item"
+    if [[ -e "$source" ]]; then
+      copy_path "$source" "$target"
+      echo "  $item" >>"$backup_dir/manifest.txt"
+    fi
+  done
+
+  {
+    echo
+    echo "Left out on purpose:"
+    echo "  .ssh"
+    echo "  .gnupg"
+    echo "  browser data"
+    echo "  password managers"
+    echo "  token and cloud credential stores"
+  } >>"$backup_dir/manifest.txt"
+
+  echo "Saved personal backup: $backup_dir"
+}
+
+latest_backup() {
+  find "$backup_root" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort | tail -n 1
+}
+
+restore_personal() {
+  local backup_dir="${1:-}"
+  local files_dir
+  local item
+  local source
+
+  if [[ -z "$backup_dir" ]]; then
+    backup_dir="$(latest_backup)"
+  fi
+
+  if [[ -z "$backup_dir" || ! -d "$backup_dir/files" ]]; then
+    echo "No personal backup found." >&2
+    exit 1
+  fi
+
+  files_dir="$backup_dir/files"
+  for item in "${items[@]}"; do
+    source="$files_dir/$item"
+    if [[ -e "$source" ]]; then
+      copy_path "$source" "$HOME/$item"
+    fi
+  done
+
+  echo "Restored personal backup: $backup_dir"
+}
+
+list_backups() {
+  if [[ ! -d "$backup_root" ]]; then
+    echo "No personal backups yet."
+    return
+  fi
+
+  find "$backup_root" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort
+}
+
+command_name="${1:-help}"
+case "$command_name" in
+  save)
+    save_personal
+    ;;
+  restore)
+    shift || true
+    restore_personal "${1:-}"
+    ;;
+  list)
+    list_backups
+    ;;
+  path)
+    echo "$backup_root"
+    ;;
+  help | --help | -h)
+    usage
+    ;;
+  *)
+    echo "Unknown command: $command_name" >&2
+    usage >&2
+    exit 2
+    ;;
+esac

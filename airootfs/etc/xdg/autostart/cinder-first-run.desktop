@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=CinderOS First Run
-Comment=Open the CinderOS Start page on first login
+Comment=Open first-run checks on login
 Exec=cinder-first-run
 Icon=cinderos-logo
 Terminal=false

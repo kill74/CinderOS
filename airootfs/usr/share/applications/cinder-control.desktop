@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=CinderOS Settings
-Comment=System setup and maintenance
+Comment=Open checks, backups, security, games, and setup
 Exec=cinder-control
 Icon=cinderos-logo
 Terminal=false

@@ -38,7 +38,7 @@ check_root_fs() {
   if [[ "$fstype" == "btrfs" ]]; then
     ok "root filesystem is Btrfs"
   else
-    warn "root filesystem is ${fstype:-unknown}; CinderOS rollback expects Btrfs"
+    warn "root filesystem is ${fstype:-unknown}; CinderOS rollback needs Btrfs"
   fi
 }
 
@@ -153,7 +153,7 @@ check_audit_tools() {
 }
 
 main() {
-  echo "CinderOS system readiness check"
+  echo "CinderOS system check"
   echo
   check_mode
   check_root_fs
