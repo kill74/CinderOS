@@ -1,0 +1,48 @@
+{
+    "layer": "top",
+    "position": "top",
+    "height": 30,
+    "spacing": 4,
+    "modules-left": ["hyprland/workspaces", "hyprland/window"],
+    "modules-center": ["clock"],
+    "modules-right": ["pulseaudio", "network", "cpu", "memory", "tray"],
+    "hyprland/workspaces": {
+        "disable-scroll": true,
+        "all-outputs": true,
+        "format": "{name}"
+    },
+    "clock": {
+        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
+        "format-alt": "{:%Y-%m-%d}"
+    },
+    "cpu": {
+        "format": "CPU: {usage}%",
+        "tooltip": false
+    },
+    "memory": {
+        "format": "RAM: {}%"
+    },
+    "network": {
+        "format-wifi": "WiFi: {essid} ({signalStrength}%)",
+        "format-ethernet": "ETH: {ipaddr}/{cidr}",
+        "tooltip-format": "{ifname} via {gwaddr}",
+        "format-linked": "{ifname} (No IP)",
+        "format-disconnected": "Disconnected"
+    },
+    "pulseaudio": {
+        "format": "VOL: {volume}% {icon}",
+        "format-bluetooth": "VOL: {volume}% {icon}",
+        "format-bluetooth-muted": "MUTED {icon}",
+        "format-muted": "MUTED",
+        "format-icons": {
+            "headphone": "HP",
+            "hands-free": "HF",
+            "headset": "HS",
+            "phone": "PH",
+            "portable": "PO",
+            "car": "CR",
+            "default": ["V1", "V2", "V3"]
+        },
+        "on-click": "pavucontrol"
+    }
+}

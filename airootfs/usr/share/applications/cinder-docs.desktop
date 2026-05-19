@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=CinderOS Offline Docs
+Comment=Browse CinderOS markdown manuals
+Exec=kitty -e /usr/local/bin/cinder-docs
+Icon=help-browser
+Terminal=false
+Type=Application
+Categories=Documentation;System;

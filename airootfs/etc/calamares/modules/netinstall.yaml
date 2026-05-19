@@ -1,0 +1,19 @@
+- name: "Desktop Environments"
+  description: "Select your preferred desktop environment."
+  hidden: false
+  selected: true
+  critical: false
+  subgroups:
+    - name: "Hyprland (Advanced Wayland)"
+      description: "Modern, dynamic tiling Wayland compositor."
+      selected: true
+      packages:
+        - hyprland
+        - waybar
+        - wofi
+    - name: "XFCE (Classic)"
+      description: "Lightweight, traditional desktop."
+      selected: false
+      packages:
+        - xfce4
+        - xfce4-goodies

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=CinderOS Dev Environment
+Comment=Setup or enter the Arch Linux developer container
+Exec=kitty --hold -e /usr/local/bin/cinder-setup-distrobox.sh
+Icon=utilities-terminal
+Terminal=false
+Type=Application
+Categories=Development;System;

@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "==> CinderOS System Restore <=="
+
+# Pre-authenticate sudo to prevent password prompts from breaking the fzf UI
+sudo -v || { echo "Authentication failed."; sleep 3; exit 1; }
+
+if [[ ! -d /.snapshots ]]; then
+  snapper list &>/dev/null || { echo "Snapper not configured or no snapshots found."; sleep 3; exit 1; }
+fi
+
+echo "Fetching snapshots..."
+SELECTED=$(sudo snapper list --columns number,date,description | tail -n +3 | fzf --prompt="Select Snapshot to Restore: " --layout=reverse --border=none)
+
+if [[ -z "$SELECTED" ]]; then
+    echo "Cancelled."
+    exit 0
+fi
+
+SNAP_ID=$(echo "$SELECTED" | awk '{print $1}')
+echo "You selected Snapshot ID: $SNAP_ID"
+echo "WARNING: This will rollback the system to this snapshot and reboot."
+read -p "Are you sure? (y/N): " confirm
+
+if [[ "$confirm" =~ ^[Yy]$ ]]; then
+    sudo snapper rollback "$SNAP_ID"
+    echo "Rollback configured. Rebooting in 5 seconds..."
+    sleep 5
+    sudo reboot
+else
+    echo "Aborted."
+fi
