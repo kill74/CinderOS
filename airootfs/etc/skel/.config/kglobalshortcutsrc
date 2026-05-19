@@ -1,0 +1,23 @@
+[khotkeys]
+_k_friendly_name=Custom Shortcuts
+
+[kwin]
+Switch Window Down=Meta+J,Meta+J,Switch to Window Below
+Switch Window Left=Meta+H,Meta+H,Switch to Window to the Left
+Switch Window Right=Meta+L,Meta+L,Switch to Window to the Right
+Switch Window Up=Meta+K,Meta+K,Switch to Window Above
+Window Close=Meta+Q,Alt+F4,Close Window
+Window Fullscreen=Meta+F,Meta+F,Make Window Fullscreen
+Window Maximize=Meta+PgUp,Meta+PgUp,Maximize Window
+Window Minimize=Meta+PgDown,Meta+PgDown,Minimize Window
+view_actual_size=Meta+0,Meta+0,Zoom to Actual Size
+
+[plasmashell]
+clipboard_action=Meta+V,Ctrl+Alt+X,Enable Clipboard Actions
+show-on-mouse-pos=Meta+V,Meta+V,Open Klipper at Mouse Position
+
+[org.kde.spectacle.desktop]
+RectangularRegionScreenShot=Meta+Shift+S,Meta+Shift+S,Capture Rectangular Region
+
+[kitty.desktop]
+_launch=Meta+Return,Meta+Return,Launch Kitty Terminal

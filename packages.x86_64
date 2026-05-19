@@ -127,6 +127,16 @@ lib32-gnutls
 lib32-libpulse
 lib32-alsa-plugins
 
+# KDE Plasma 6 (Wayland Gaming)
+plasma-meta
+konsole
+dolphin
+sddm
+sddm-kcm
+plasma-wayland-session
+egl-wayland
+spectacle
+
 # COSMIC desktop.
 cosmic-app-library
 cosmic-session
@@ -186,7 +196,21 @@ adwaita-cursors
 kvantum
 nwg-look
 
+# Virtualization & Development
+virt-manager
+qemu-desktop
+dnsmasq
+iptables-nft
+libguestfs
+zellij
+
+# Secrets & Wayland QoL
+seahorse
+xwaylandvideobridge
+
 # Applications and development
+bruno
+dbeaver
 kitty
 discord
 docker
