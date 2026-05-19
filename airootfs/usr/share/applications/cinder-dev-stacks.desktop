@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=CinderOS Dev Stacks
+Comment=Initialize declarative Distrobox environments
+Exec=kitty -e /usr/local/bin/cinder-dev-stacks
+Icon=applications-development
+Terminal=false
+Type=Application
+Categories=Development;

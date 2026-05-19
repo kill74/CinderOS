@@ -11,5 +11,10 @@ echo "Building CinderOS from: $profile_dir"
 echo "Work directory: $work_dir"
 echo "Output directory: $out_dir"
 
+echo "Copying root documentation into the ISO payload..."
+mkdir -p "$profile_dir/airootfs/usr/share/doc/cinderos"
+cp "$profile_dir"/*.md "$profile_dir/airootfs/usr/share/doc/cinderos/" 2>/dev/null || true
+cp "$profile_dir/docs"/*.md "$profile_dir/airootfs/usr/share/doc/cinderos/" 2>/dev/null || true
+
 sudo mkarchiso -v -w "$work_dir" -o "$out_dir" "$profile_dir"
 

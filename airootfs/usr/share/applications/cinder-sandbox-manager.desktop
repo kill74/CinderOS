@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=CinderOS Sandbox Manager
+Comment=Force GUI applications to launch via Firejail
+Exec=kitty -e /usr/local/bin/cinder-sandbox-manager
+Icon=security-high
+Terminal=false
+Type=Application
+Categories=System;Security;

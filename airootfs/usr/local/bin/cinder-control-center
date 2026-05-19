@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+while true; do
+    OPTION=$(printf "1. Toggle Gamemode\n2. Set CPU to Performance\n3. Set CPU to Powersave\n4. View GPU Status (nvtop)\n5. Exit" | fzf --prompt="CinderOS Control Center: " --layout=reverse)
+    
+    case "$OPTION" in
+        1*)
+            gamemoded -t
+            read -p "Press Enter to continue..."
+            ;;
+        2*)
+            echo "Setting performance governor..."
+            sudo cpupower frequency-set -g performance || echo "Failed. cpupower may not be available."
+            read -p "Press Enter to continue..."
+            ;;
+        3*)
+            echo "Setting powersave governor..."
+            sudo cpupower frequency-set -g powersave || echo "Failed. cpupower may not be available."
+            read -p "Press Enter to continue..."
+            ;;
+        4*)
+            nvtop
+            ;;
+        5*|"")
+            break
+            ;;
+    esac
+done

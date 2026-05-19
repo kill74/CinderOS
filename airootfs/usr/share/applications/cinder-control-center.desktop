@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=CinderOS Control Center
+Comment=Tune system performance and gaming settings
+Exec=kitty -e /usr/local/bin/cinder-control-center
+Icon=preferences-system-performance
+Terminal=false
+Type=Application
+Categories=System;Settings;

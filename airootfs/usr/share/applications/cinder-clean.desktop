@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=CinderOS System Cleaner
+Comment=Safely clean package cache, unused flatpaks, and orphans
+Exec=kitty -e /usr/local/bin/cinder-clean
+Icon=edit-clear
+Terminal=false
+Type=Application
+Categories=System;Settings;

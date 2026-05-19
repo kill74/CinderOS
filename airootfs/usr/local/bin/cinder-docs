@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DOC_DIR="/usr/share/doc/cinderos"
+
+if [[ ! -d "$DOC_DIR" ]]; then
+    echo "Documentation directory not found: $DOC_DIR"
+    sleep 3
+    exit 1
+fi
+
+while true; do
+    # List files, strip the path, pipe to fzf
+    SELECTED=$(find "$DOC_DIR" -type f -name "*.md" -exec basename {} \; | fzf --prompt="Select Document: " --height=100% --layout=reverse --border=none)
+
+    if [[ -z "$SELECTED" ]]; then
+        # User pressed escape
+        break
+    fi
+
+    # Display the selected document using bat
+    bat --style=plain --paging=always "$DOC_DIR/$SELECTED"
+done

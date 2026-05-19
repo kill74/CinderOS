@@ -14,6 +14,8 @@ These checks pass on this checkout:
 bash scripts/release-check.sh
 ```
 
+That check covers structure, shell syntax, `cinder-control` Python syntax, visible text, code style, security, appearance, and daily-driver guardrails.
+
 Package verification, ISO build, and install QA still need an Arch host with `pacman`, `archiso`, and QEMU.
 
 ## Who It Is For
@@ -102,6 +104,27 @@ After building:
 bash scripts/qemu-smoke.sh
 ```
 
+For firmware-specific smoke tests:
+
+```bash
+bash scripts/qemu-smoke.sh --firmware uefi
+bash scripts/qemu-smoke.sh --firmware bios
+```
+
+To save a local release note bundle:
+
+```bash
+bash scripts/release-evidence.sh
+```
+
+Before an ISO exists, this still creates a pre-build note:
+
+```bash
+bash scripts/release-evidence.sh --allow-missing-iso
+```
+
+Evidence folders stay outside the repo by default under `$HOME/cinderos-out/evidence`.
+
 ## Daily Driver Checklist
 
 Before replacing another OS:
@@ -140,6 +163,8 @@ cinder-dev status
 cinder-dev db
 cinder-game-check
 cinder-personal save
+bash scripts/qemu-smoke.sh --firmware uefi
+bash scripts/release-evidence.sh
 sudo cinder-update
 cinder-memory status
 cinder-memory low-idle
@@ -174,6 +199,7 @@ Known gaps are tracked in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 - `packages.x86_64` - pacman package list for the ISO.
 - `packages.aur` - AUR package list to prebuild or install after setup.
 - `HARDWARE_MATRIX.md` - AMD, Intel, and NVIDIA test tracking.
+- `docs/VOICE.md` - writing notes for keeping CinderOS plain and human.
 - `pacman.conf` - build-time pacman config with multilib and CachyOS repos enabled.
 - `airootfs/` - root filesystem overlay copied into the live ISO.
 - `scripts/` - build, validation, package-check, and smoke-test helpers.

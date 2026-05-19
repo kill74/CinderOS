@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+INI_FILE="/usr/share/cinderos/distrobox.ini"
+
+if [[ ! -f "$INI_FILE" ]]; then
+    echo "Stack definitions not found at $INI_FILE"
+    sleep 3
+    exit 1
+fi
+
+echo "==> CinderOS Developer Stacks <=="
+STACKS=$(grep -oP '^\[\K[^\]]+' "$INI_FILE" || echo "")
+if [[ -z "$STACKS" ]]; then
+    echo "No stacks found in $INI_FILE"
+    sleep 3
+    exit 1
+fi
+
+SELECTED=$(echo "$STACKS" | fzf --prompt="Select Stack to Assemble: " --layout=reverse)
+
+if [[ -z "$SELECTED" ]]; then
+    exit 0
+fi
+
+echo "Assembling stack '$SELECTED'..."
+distrobox assemble create --file "$INI_FILE" --name "$SELECTED"
+echo "Done! Entering container..."
+distrobox enter "$SELECTED"

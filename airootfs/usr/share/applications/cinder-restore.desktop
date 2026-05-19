@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=CinderOS Restore
+Comment=Rollback the system to a previous snapshot
+Exec=kitty -e /usr/local/bin/cinder-restore
+Icon=document-revert
+Terminal=false
+Type=Application
+Categories=System;

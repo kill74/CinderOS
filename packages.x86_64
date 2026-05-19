@@ -279,6 +279,7 @@ lshw
 dmidecode
 power-profiles-daemon
 switcheroo-control
+cpupower
 
 # Printing
 cups
@@ -288,3 +289,18 @@ system-config-printer
 # Accessibility
 orca
 at-spi2-core
+
+# Hyprland Stack
+hyprland
+hyprpaper
+waybar
+wofi
+mako
+polkit-kde-agent
+
+# Container Development
+podman
+distrobox
+
+# System Maintenance
+pacman-contrib

@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "==> CinderOS System Cleaner (Standard Safe Mode) <=="
+echo ""
+
+# Pre-authenticate sudo so the user isn't prompted halfway through the cleanup
+sudo -v || { echo "Authentication failed."; sleep 3; exit 1; }
+
+echo "[1/3] Cleaning pacman cache (keeping 3 recent versions)..."
+if command -v paccache &> /dev/null; then
+    sudo paccache -rk3
+else
+    echo "paccache not found (pacman-contrib missing). Skipping..."
+fi
+echo ""
+
+echo "[2/3] Removing unused flatpak runtimes..."
+if command -v flatpak &> /dev/null; then
+    flatpak uninstall --unused -y
+else
+    echo "flatpak not found. Skipping..."
+fi
+echo ""
+
+echo "[3/3] Removing orphaned packages..."
+if pacman -Qtdq > /dev/null 2>&1; then
+    sudo pacman -Rns $(pacman -Qtdq) --noconfirm
+else
+    echo "No orphaned packages found."
+fi
+echo ""
+
+echo "==> Clean complete! <=="
+sleep 3
