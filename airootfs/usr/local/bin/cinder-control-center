@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 while true; do
     OPTION=$(printf "1. Toggle Gamemode\n2. Set CPU to Performance\n3. Set CPU to Powersave\n4. View GPU Status (nvtop)\n5. Exit" | fzf --prompt="CinderOS Control Center: " --layout=reverse)

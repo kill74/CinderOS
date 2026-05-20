@@ -25,7 +25,10 @@ echo ""
 
 echo "[3/3] Removing orphaned packages..."
 if pacman -Qtdq > /dev/null 2>&1; then
-    sudo pacman -Rns $(pacman -Qtdq) --noconfirm
+    mapfile -t orphans < <(pacman -Qtdq)
+    if (( ${#orphans[@]} > 0 )); then
+        sudo pacman -Rns "${orphans[@]}" --noconfirm
+    fi
 else
     echo "No orphaned packages found."
 fi

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0 Ember (Bugfix)
+
+- Fixed: `cinder-hardware-setup --user` no longer crashes when NVIDIA is detected (tried to write to `/etc/` without root).
+- Fixed: `cinder-control-center` now has `set -euo pipefail` for consistent error handling.
+- Fixed: `cinder-clean` properly quotes orphan package list to avoid empty argument.
+- Fixed: `cinder-restore` now uses the `root` Snapper config explicitly.
+
 ## 1.0.0 Ember
 
 - Built the ArchISO profile around COSMIC, XFCE Lite, Btrfs, PipeWire, zram, earlyoom, UFW, and AppArmor.

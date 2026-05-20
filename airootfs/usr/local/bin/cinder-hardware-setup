@@ -80,7 +80,9 @@ write_nvidia_modprobe() {
 detect_graphics
 write_environment
 write_profile_exports
-write_nvidia_modprobe
+if [[ "${1:-}" != "--user" ]]; then
+  write_nvidia_modprobe
+fi
 
 echo "CinderOS hardware setup complete."
 echo "AMD GPU detected: $has_amd"
