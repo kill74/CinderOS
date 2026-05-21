@@ -31,7 +31,7 @@ required=(
   "$profile_dir/airootfs/etc/sysctl.d/90-cinderos-hardening.conf"
   "$profile_dir/airootfs/etc/systemd/system-preset/90-cinderos-low-idle.preset"
   "$profile_dir/airootfs/etc/cinderos/session-mode"
-  "$profile_dir/airootfs/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml"
+  "$profile_dir/airootfs/root/custom_files/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml"
   "$profile_dir/airootfs/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml"
   "$profile_dir/airootfs/usr/share/plymouth/themes/cinderos/cinderos.plymouth"
   "$profile_dir/airootfs/usr/share/grub/themes/cinderos/theme.txt"
@@ -44,7 +44,7 @@ required=(
   "$profile_dir/airootfs/usr/share/doc/cinderos/QA_CHECKLIST.md"
   "$profile_dir/airootfs/usr/share/doc/cinderos/RELEASE.md"
   "$profile_dir/airootfs/usr/share/doc/cinderos/VOICE.md"
-  "$profile_dir/airootfs/usr/share/cosmic/com.system76.CosmicBackground/v1/all"
+  "$profile_dir/airootfs/root/custom_files/usr/share/cosmic/com.system76.CosmicBackground/v1/all"
 )
 
 for path in "${required[@]}"; do
@@ -144,7 +144,7 @@ for package in nodejs npm pnpm python-pip python-pipx python-poetry rustup go jd
   fi
 done
 
-for package in steam steam-native-runtime gamemode mangohud gamescope goverlay mesa-utils vulkan-tools lib32-mesa lib32-vulkan-radeon; do
+for package in steam gamemode mangohud gamescope goverlay mesa-utils vulkan-tools lib32-mesa lib32-vulkan-radeon; do
   if ! grep -Eq "^\s*${package}\s*$" "$profile_dir/packages.x86_64"; then
     echo "Expected game package missing from packages.x86_64: $package" >&2
     exit 1

@@ -92,8 +92,6 @@ lib32-vkd3d
 spirv-tools
 libva-mesa-driver
 lib32-libva-mesa-driver
-mesa-vdpau
-lib32-mesa-vdpau
 intel-media-driver
 libva-intel-driver
 nvidia-dkms
@@ -112,7 +110,6 @@ nvtop
 
 # Gaming
 steam
-steam-native-runtime
 wine
 wine-mono
 winetricks
@@ -133,7 +130,6 @@ konsole
 dolphin
 sddm
 sddm-kcm
-plasma-wayland-session
 egl-wayland
 spectacle
 
@@ -206,10 +202,8 @@ zellij
 
 # Secrets & Wayland QoL
 seahorse
-xwaylandvideobridge
 
 # Applications and development
-bruno
 dbeaver
 kitty
 discord
@@ -238,7 +232,6 @@ redis
 direnv
 httpie
 hurl
-calamares
 python
 python-cairo
 python-gobject

@@ -7,7 +7,7 @@ iso_application="CinderOS Live/Installation Medium"
 iso_version="1.0.0"
 install_dir="arch"
 buildmodes=('iso')
-bootmodes=('bios.syslinux.mbr' 'bios.syslinux.eltorito' 'uefi-ia32.grub.esp' 'uefi-x64.grub.esp')
+bootmodes=('uefi.grub')
 arch="x86_64"
 pacman_conf="pacman.conf"
 
