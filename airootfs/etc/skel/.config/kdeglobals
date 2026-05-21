@@ -1,0 +1,13 @@
+[General]
+ColorScheme=BreezeDark
+Name=Breeze Dark
+
+[KDE]
+widgetStyle=Breeze
+
+[General][Fonts]
+font=Roboto,10,-1,5,50,0,0,0,0,0,Regular
+fixed=JetBrainsMono Nerd Font,10,-1,5,50,0,0,0,0,0,Regular
+menuFont=Roboto,10,-1,5,50,0,0,0,0,0,Regular
+smallestReadableFont=Roboto,8,-1,5,50,0,0,0,0,0,Regular
+toolBarFont=Roboto,10,-1,5,50,0,0,0,0,0,Regular

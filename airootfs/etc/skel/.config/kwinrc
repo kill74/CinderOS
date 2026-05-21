@@ -1,0 +1,11 @@
+[Windows]
+BorderlessMaximizedWindows=true
+TitlebarDoubleClickCommand=Maximize
+TitlebarTitleAppearance=0
+
+[Plugins]
+poloniumEnabled=true
+
+[Desktops]
+Number=4
+Rows=1

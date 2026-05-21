@@ -4,6 +4,17 @@
   selected: true
   critical: false
   subgroups:
+    - name: "KDE Plasma 6 (Ultimate Gaming)"
+      description: "Feature-complete, flawless Wayland gaming with HDR and VRR."
+      selected: false
+      packages:
+        - plasma-meta
+        - konsole
+        - dolphin
+        - sddm
+        - sddm-kcm
+        - plasma-wayland-session
+        - egl-wayland
     - name: "Hyprland (Advanced Wayland)"
       description: "Modern, dynamic tiling Wayland compositor."
       selected: true
