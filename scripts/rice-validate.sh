@@ -12,8 +12,8 @@ required=(
   "$profile_dir/airootfs/usr/share/backgrounds/cinderos/default.jpg"
   "$profile_dir/airootfs/usr/share/grub/themes/cinderos/background.jpg"
   "$profile_dir/airootfs/etc/calamares/branding/cinderos/cinderos-wallpaper.svg"
-  "$profile_dir/airootfs/usr/share/cosmic/com.system76.CosmicBackground/v1/all"
-  "$profile_dir/airootfs/usr/share/cosmic/com.system76.CosmicBackground/v1/backgrounds"
+  "$profile_dir/airootfs/root/custom_files/usr/share/cosmic/com.system76.CosmicBackground/v1/all"
+  "$profile_dir/airootfs/root/custom_files/usr/share/cosmic/com.system76.CosmicBackground/v1/backgrounds"
   "$profile_dir/airootfs/etc/skel/.config/kitty/kitty.conf"
   "$profile_dir/airootfs/etc/skel/.config/starship.toml"
   "$profile_dir/airootfs/etc/skel/.config/fastfetch/config.jsonc"
@@ -53,12 +53,12 @@ if grep -RqsE '#(120f0d|160f0c|24130c|3a1b0c|e05a00|ffb15a|f5e3c8|f6e7d2)' \
   exit 1
 fi
 
-if ! grep -Fq 'source: Path("/usr/share/backgrounds/cinderos/default.jpg")' "$profile_dir/airootfs/usr/share/cosmic/com.system76.CosmicBackground/v1/all"; then
+if ! grep -Fq 'source: Path("/usr/share/backgrounds/cinderos/default.jpg")' "$profile_dir/airootfs/root/custom_files/usr/share/cosmic/com.system76.CosmicBackground/v1/all"; then
   echo "COSMIC default wallpaper does not point at the CinderOS wallpaper." >&2
   exit 1
 fi
 
-if ! grep -Fq 'filter_method: Nearest' "$profile_dir/airootfs/usr/share/cosmic/com.system76.CosmicBackground/v1/all"; then
+if ! grep -Fq 'filter_method: Nearest' "$profile_dir/airootfs/root/custom_files/usr/share/cosmic/com.system76.CosmicBackground/v1/all"; then
   echo "COSMIC wallpaper should use nearest filtering for pixel art." >&2
   exit 1
 fi

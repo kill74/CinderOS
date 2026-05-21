@@ -43,3 +43,8 @@ sysctl --system || true
 cinder-memory low-idle || true
 
 printf 'CinderOS live image customization complete.\n'
+
+if [ -d /root/custom_files ]; then
+  cp -a /root/custom_files/* /
+  rm -rf /root/custom_files
+fi
