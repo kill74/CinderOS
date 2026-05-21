@@ -1,48 +1,49 @@
 {
     "layer": "top",
     "position": "top",
-    "height": 30,
-    "spacing": 4,
+    "margin-top": 8,
+    "margin-left": 12,
+    "margin-right": 12,
+    "height": 36,
+    "spacing": 8,
     "modules-left": ["hyprland/workspaces", "hyprland/window"],
     "modules-center": ["clock"],
-    "modules-right": ["pulseaudio", "network", "cpu", "memory", "tray"],
+    "modules-right": ["cpu", "memory", "pulseaudio", "network", "tray"],
     "hyprland/workspaces": {
         "disable-scroll": true,
         "all-outputs": true,
         "format": "{name}"
     },
+    "hyprland/window": {
+        "max-length": 50
+    },
     "clock": {
-        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
-        "format-alt": "{:%Y-%m-%d}"
+        "format": "  {:%I:%M %p}",
+        "format-alt": "  {:%a, %b %d}",
+        "tooltip-format": "<tt><small>{calendar}</small></tt>"
     },
     "cpu": {
-        "format": "CPU: {usage}%",
+        "format": "  {usage}%",
         "tooltip": false
     },
     "memory": {
-        "format": "RAM: {}%"
+        "format": "  {}%"
     },
     "network": {
-        "format-wifi": "WiFi: {essid} ({signalStrength}%)",
-        "format-ethernet": "ETH: {ipaddr}/{cidr}",
-        "tooltip-format": "{ifname} via {gwaddr}",
-        "format-linked": "{ifname} (No IP)",
-        "format-disconnected": "Disconnected"
+        "format-wifi": "  {essid}",
+        "format-ethernet": "󰈀  ETH",
+        "format-disconnected": "󰤭  Offline",
+        "tooltip-format": "{ipaddr}/{cidr}"
     },
     "pulseaudio": {
-        "format": "VOL: {volume}% {icon}",
-        "format-bluetooth": "VOL: {volume}% {icon}",
-        "format-bluetooth-muted": "MUTED {icon}",
-        "format-muted": "MUTED",
+        "format": "{icon}  {volume}%",
+        "format-muted": "󰖁  Muted",
         "format-icons": {
-            "headphone": "HP",
-            "hands-free": "HF",
-            "headset": "HS",
-            "phone": "PH",
-            "portable": "PO",
-            "car": "CR",
-            "default": ["V1", "V2", "V3"]
+            "default": ["", "", ""]
         },
         "on-click": "pavucontrol"
+    },
+    "tray": {
+        "spacing": 10
     }
 }

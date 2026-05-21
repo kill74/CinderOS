@@ -1,133 +1,129 @@
 # CinderOS
 
-CinderOS 1.0.0 "Ember" is my Arch Linux install image for a desktop workstation. It is built around COSMIC, Btrfs, PipeWire, zram, AppArmor, full-stack work tools, Steam/Proton support, and a small set of maintenance commands.
+**An Arch Linux install image built for a trusted desktop workstation.**
 
-The goal is simple: an Arch install image I can actually trust, with quiet defaults, recovery tools close by, and heavier services left off until they are needed.
+CinderOS 1.0.0 "Ember" is an opinionated ArchISO profile designed around COSMIC, Btrfs, PipeWire, zram, AppArmor, full-stack development tools, gaming support, and a suite of maintenance commands. The goal is simple: an Arch install I can actually trust, with sensible defaults, recovery tools close at hand, and heavier services left off until they're needed.
 
 ## Status
 
-This checkout is ready for build and VM testing. Do not install it over a working OS until the [daily-driver checklist](DAILY_DRIVER.md) is complete.
+⚠️ **Pre-Production**: Ready for build and VM testing. Not yet ready for production use on real hardware.
 
-These checks pass on this checkout:
+- **Version**: 1.0.0 "Ember"
+- **Target Hardware**: AMD and Intel systems (safest for daily driver); NVIDIA packages included but experimental
+- **Last Validated**: See [CHANGELOG.md](CHANGELOG.md)
+- **Known Issues**: See [KNOWN_ISSUES.md](KNOWN_ISSUES.md)
 
-```bash
-bash scripts/release-check.sh
-```
+**Before installing on real hardware**, complete the [daily-driver checklist](#daily-driver-checklist) and review [DAILY_DRIVER.md](DAILY_DRIVER.md), [QA_CHECKLIST.md](QA_CHECKLIST.md), and [HARDWARE_MATRIX.md](HARDWARE_MATRIX.md).
 
-That check covers structure, shell syntax, `cinder-control` Python syntax, visible text, code style, security, appearance, and daily-driver guardrails.
+## Quick Start
 
-Package verification, ISO build, and install QA still need an Arch host with `pacman`, `archiso`, and QEMU.
+### Build Requirements
 
-## Who It Is For
-
-- Desktop users who want an Arch-based workstation with COSMIC by default.
-- Gaming and development machines with AMD or Intel graphics.
-- Users who want Btrfs snapshots, AppArmor, UFW, zram, and basic system checks available from day one.
-- People who prefer heavier services to be opt-in instead of running by default.
-
-NVIDIA packages are included, but AMD and Intel are the safer first daily-driver path right now. NVIDIA still needs real testing around kernel updates, suspend, and Wayland.
-
-## What It Ships With
-
-- COSMIC Wayland session with XFCE Lite available when you want a lighter desktop.
-- Linux Zen as the default kernel and Linux LTS as a fallback.
-- Btrfs install layout, Snapper, grub-btrfs, Btrfs Assistant, and btrfsmaintenance.
-- PipeWire, NetworkManager, UFW, AppArmor, zram, earlyoom, power modes, and switcheroo.
-- Steam, Proton helpers, Wine, GameMode, MangoHud, Gamescope, GOverlay, Vulkan/OpenGL tools, and 32-bit graphics libraries.
-- Node, npm, pnpm, Python pip tools, Rustup, Go, OpenJDK, SQLite, PostgreSQL, Redis, direnv, HTTPie, hurl, and Docker CLI/build tools.
-- Kitty, zsh, starship, zoxide, eza, bat, ripgrep, fd, fzf, btop, fastfetch, lazygit, GitHub CLI, tmux, and Neovim.
-- CinderOS Settings and `cinder-*` commands for hardware checks, reports, dev checks, game checks, local personal backups, memory, security, snapshots, updates, session choice, and appearance.
-
-## Off By Default
-
-These packages may be present, but their services are not enabled during the default install:
-
-- Docker
-- PostgreSQL
-- Redis
-- Bluetooth
-- CUPS printing
-- fwupd
-- SSH and fail2ban
-- USBGuard
-- ClamAV daemons
-- auditd
-- Snapper timers and Btrfs maintenance timers
-- Flathub setup
-
-Enable only what the machine actually needs from CinderOS Settings or the matching command-line tool.
-
-## Build Requirements
-
-Build on an Arch-based host:
+Build on an Arch-based host with `archiso` and `git`:
 
 ```bash
 sudo pacman -Syu archiso git
 ```
 
-Recommended for AUR package work:
+**Optional** — for AUR packages, ISO testing:
 
 ```bash
-sudo pacman -S base-devel devtools
+sudo pacman -S base-devel devtools qemu-full edk2-ovmf
 ```
 
-Recommended for ISO smoke tests:
+### Build & Test
 
 ```bash
-sudo pacman -S qemu-full edk2-ovmf
-```
-
-## Build
-
-From this folder:
-
-```bash
+# Validate profile
 bash scripts/release-check.sh
+
+# Build ISO
 bash scripts/build-iso.sh
-```
 
-The build script uses:
-
-- Work directory: `/tmp/cinderos-work`
-- Output directory: `$HOME/cinderos-out`
-- ISO filename: `cinderos-1.0.0-x86_64.iso`
-
-Direct ArchISO command:
-
-```bash
-sudo mkarchiso -v -w /tmp/cinderos-work -o "$HOME/cinderos-out" .
-```
-
-After building:
-
-```bash
-bash scripts/qemu-smoke.sh
-```
-
-For firmware-specific smoke tests:
-
-```bash
+# Smoke test (UEFI/BIOS)
 bash scripts/qemu-smoke.sh --firmware uefi
 bash scripts/qemu-smoke.sh --firmware bios
 ```
 
-To save a local release note bundle:
+**Output**: `$HOME/cinderos-out/cinderos-1.0.0-x86_64.iso`
 
-```bash
-bash scripts/release-evidence.sh
+### What's Inside
+
+- **330+ pacman packages** + **21 AUR packages**
+- **37 custom CinderOS command-line tools** (`cinder-*` suite)
+- Complete recovery and snapshot infrastructure
+- Gaming, development, and system tooling ready out of the box
+
+## Key Features
+
+### Desktop & Sessions
+- **COSMIC Wayland** as primary desktop environment
+- **XFCE Lite** available as a lighter alternative
+- greetd login manager with COSMIC Greeter (tuigreet fallback)
+
+### Storage & Recovery
+- **Btrfs filesystem** with Snapper snapshots
+- Automatic snapshots on package updates (`snap-pac`)
+- grub-btrfs to boot previous snapshots
+- Btrfs Assistant GUI and maintenance tools
+- Full rollback capabilities
+
+### System Fundamentals
+- **Kernel**: Linux Zen (default) + Linux LTS (fallback)
+- **Audio**: PipeWire (with ALSA, Jack, Pulse compatibility)
+- **Networking**: NetworkManager + IWD
+- **Memory**: zram with zstd compression + earlyoom protection
+- **Security**: AppArmor (enabled), UFW firewall, Audit framework
+- **Power Management**: power-profiles-daemon + Switcheroo GPU control
+
+### Development Stack
+Node.js, npm, pnpm · Python (pip, pipx, poetry) · Rust (rustup) · Go · OpenJDK · Docker · PostgreSQL, Redis, SQLite
+
+**Plus**: direnv, HTTPie, hurl, and other dev essentials.
+
+### Gaming Support
+Steam, Proton helpers, Wine, GameMode, MangoHud, Gamescope, GOverlay, Vulkan/OpenGL tools, 32-bit graphics libraries
+
+### Terminal & CLI Excellence
+Kitty · zsh + Starship prompt · zoxide · ripgrep, fd, fzf · bat · eza · btop, fastfetch · lazygit, GitHub CLI · tmux · Neovim
+
+### System Administration
+37 custom CinderOS commands for hardware setup, diagnostics, dev tools, gaming checks, snapshots, security, updates, memory, and more.
+
+## Design Philosophy
+
+Services opt-in, not enabled by default:
+- Docker, PostgreSQL, Redis
+- Bluetooth, CUPS printing
+- SSH, fail2ban, USBGuard
+- ClamAV, auditd, Snapper/Btrfs timers
+- Flathub/Flatpak setup
+
+Enable only what your machine actually needs.
+
+## Who This Is For
+
+- **Desktop users** wanting an Arch-based workstation with COSMIC by default
+- **Developers and gamers** with AMD or Intel graphics
+- **Users** who value Btrfs snapshots, AppArmor, UFW, zram, and system diagnostics from day one
+- **People** who prefer explicit opt-in over hidden background services
+
+**Note on NVIDIA**: AMD and Intel are safer first daily-driver choices. NVIDIA is experimental—needs testing around kernel updates, suspend, and Wayland stability.
+
+## Off By Default
+
+The following packages are installed but services are disabled:
+
+```
+Docker · PostgreSQL · Redis · Bluetooth · CUPS · fwupd · SSH/fail2ban
+USBGuard · ClamAV · auditd · Snapper/Btrfs timers · Flathub
 ```
 
-Before an ISO exists, this still creates a pre-build note:
-
-```bash
-bash scripts/release-evidence.sh --allow-missing-iso
-```
-
-Evidence folders stay outside the repo by default under `$HOME/cinderos-out/evidence`.
+Enable from CinderOS Settings or via command-line tools as needed.
 
 ## Daily Driver Checklist
 
-Before replacing another OS:
+Before replacing your current OS:
 
 ```bash
 cinder-doctor
@@ -138,76 +134,173 @@ sudo cinder-update
 sudo grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
-Before trusting it, check:
-
-- External backup and restore media work.
-- A VM install has completed.
-- GRUB shows snapshot entries.
-- Linux Zen boots.
-- Linux LTS boots.
-- A rollback path has been tested in a VM.
-
-See [DAILY_DRIVER.md](DAILY_DRIVER.md), [QA_CHECKLIST.md](QA_CHECKLIST.md), [HARDWARE_MATRIX.md](HARDWARE_MATRIX.md), and [RELEASE.md](RELEASE.md) before using it on real hardware.
+Then verify:
+- External backup and restore media work
+- VM install completes successfully
+- GRUB shows snapshot entries
+- Linux Zen boots
+- Linux LTS boots
+- Rollback path has been tested in a VM
 
 ## Useful Commands
 
+### System & Diagnostics
 ```bash
-cinder-control
-cinder-control --page dev
-cinder-control --page games
-cinder-control --page diagnostics
-cinder-welcome commands
-cinder-doctor
-cinder-report save
-cinder-dev status
-cinder-dev db
-cinder-game-check
-cinder-personal save
-bash scripts/qemu-smoke.sh --firmware uefi
+cinder-control                    # Settings GUI
+cinder-doctor                     # System health check
+cinder-report save                # Generate diagnostics report
+cinder-hardware-setup             # Detect and configure hardware
+```
+
+### Development & Gaming
+```bash
+cinder-dev status                 # Dev environment overview
+cinder-dev db                     # Database status
+cinder-game-check                 # Gaming hardware check
+cinder-control --page dev         # Dev settings GUI
+cinder-control --page games       # Gaming settings GUI
+```
+
+### Snapshots & Updates
+```bash
+sudo cinder-snapshot setup        # Initialize snapshots
+sudo cinder-snapshot create       # Create manual snapshot
+cinder-snapshot list              # List all snapshots
+sudo cinder-update                # Safe update with snapshots
+```
+
+### Performance & Security
+```bash
+cinder-memory status              # Memory mode info
+cinder-memory low-idle            # Switch to low-power mode
+cinder-security status            # Security overview
+sudo cinder-security harden       # Enable hardening
+cinder-tune balanced              # Performance tuning
+```
+
+### Sessions & Appearance
+```bash
+cinder-session-mode cosmic        # Switch to COSMIC
+cinder-session-mode lite          # Switch to XFCE Lite
+cinder-control --page diagnostics # System diagnostics GUI
+cinder-welcome commands           # Available commands
+```
+
+### Local Backups
+```bash
+cinder-personal save              # Backup dotfiles locally
+```
+
+## Build Details
+
+### Direct ArchISO Command
+
+```bash
+sudo mkarchiso -v -w /tmp/cinderos-work -o "$HOME/cinderos-out" .
+```
+
+### Directories
+- **Work**: `/tmp/cinderos-work`
+- **Output**: `$HOME/cinderos-out`
+- **Evidence**: `$HOME/cinderos-out/evidence/`
+
+### Release Evidence
+
+```bash
 bash scripts/release-evidence.sh
-sudo cinder-update
-cinder-memory status
-cinder-memory low-idle
-cinder-security status
-cinder-security harden
-sudo cinder-snapshot setup
-cinder-session-mode cosmic
-cinder-session-mode lite
-cinder-tune balanced
+bash scripts/release-evidence.sh --allow-missing-iso  # Before ISO exists
 ```
 
 ## AUR Packages
 
-`packages.x86_64` contains packages that pacman can resolve during `mkarchiso`.
+`packages.x86_64` lists pacman packages resolved during `mkarchiso`.
 
-`packages.aur` lists packages that need a separate AUR build path, such as VS Code, Zed, Helium, Proton GE, Bottles, and Heroic. Build those packages in a clean chroot and expose them through a local repo, or install them after setup with `paru`.
+`packages.aur` lists AUR packages (VS Code, Zed, Helium, Proton GE, Bottles, Heroic, etc.) that must be:
+1. Built separately in a clean chroot, or
+2. Installed after setup using `paru`
 
-## Current Limits
+## Repository Structure
 
-- Package verification must run on an Arch host with pacman.
-- AUR packages are not installed by `mkarchiso` unless they are first built into a custom repo.
-- Full install testing still needs a VM or physical machine.
-- Daily-driver installs still need a tested external backup, restore media, first update, Linux LTS boot, and rollback path.
-- Secure Boot tools are included, but key creation and enrollment stay manual.
-- USBGuard stays disabled until a policy is reviewed and enabled by the user.
+```
+├── README.md                      # This file
+├── CHANGELOG.md                   # Version history
+├── DAILY_DRIVER.md               # Pre-deployment checklist
+├── KNOWN_ISSUES.md               # Open blockers
+├── HARDWARE_MATRIX.md            # Hardware test tracking
+├── QA_CHECKLIST.md               # Quality assurance steps
+├── RELEASE.md                    # Release process
+├── NOTES.md                      # Developer notes
+│
+├── docs/
+│   └── VOICE.md                 # Writing style guide
+│
+├── scripts/                      # Build and validation
+│   ├── release-check.sh          # Pre-release validation
+│   ├── build-iso.sh              # Build ISO
+│   ├── qemu-smoke.sh             # VM boot tests
+│   └── (8+ other helpers)
+│
+├── airootfs/                     # Live ISO filesystem overlay
+│   ├── etc/                      # System config
+│   ├── root/                     # Customization script
+│   └── usr/local/bin/            # 37 cinder-* commands
+│
+├── profiledef.sh                 # ArchISO profile metadata
+├── packages.x86_64               # Pacman package manifest
+├── packages.aur                  # AUR packages
+├── pacman.conf                   # Build-time pacman config
+└── grub/                         # Bootloader configuration
+```
 
-Known gaps are tracked in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+## Documentation Hub
 
-## Repository Layout
+| Document | Purpose |
+|----------|---------|
+| [CHANGELOG.md](CHANGELOG.md) | Version history and changes |
+| [DAILY_DRIVER.md](DAILY_DRIVER.md) | Pre-production deployment checklist |
+| [KNOWN_ISSUES.md](KNOWN_ISSUES.md) | Open gaps and experimental features |
+| [HARDWARE_MATRIX.md](HARDWARE_MATRIX.md) | AMD/Intel/NVIDIA test tracking |
+| [QA_CHECKLIST.md](QA_CHECKLIST.md) | Quality assurance procedures |
+| [RELEASE.md](RELEASE.md) | Release process documentation |
+| [NOTES.md](NOTES.md) | Developer notes and context |
+| [docs/VOICE.md](docs/VOICE.md) | Writing style guide |
 
-- `profiledef.sh` - ArchISO profile metadata and build settings.
-- `packages.x86_64` - pacman package list for the ISO.
-- `packages.aur` - AUR package list to prebuild or install after setup.
-- `HARDWARE_MATRIX.md` - AMD, Intel, and NVIDIA test tracking.
-- `docs/VOICE.md` - writing notes for keeping CinderOS plain and human.
-- `pacman.conf` - build-time pacman config with multilib and CachyOS repos enabled.
-- `airootfs/` - root filesystem overlay copied into the live ISO.
-- `scripts/` - build, validation, package-check, and smoke-test helpers.
-- `grub/` - live ISO GRUB configuration.
-- `efiboot/` - notes for future EFI-specific boot work; GRUB is active today.
+## Current Limitations
+
+- AUR packages not installed by `mkarchiso` unless prebuilt into a custom repo
+- Package verification requires Arch host with `pacman`
+- Full install testing needs VM or physical hardware
+- Secure Boot and USBGuard setup manual (keys/policies)
+- NVIDIA still needs testing on real hardware (kernel updates, suspend, Wayland)
+- All major features need hardware testing before production use
+
+See [KNOWN_ISSUES.md](KNOWN_ISSUES.md) for detailed tracking.
 
 ## Live User
 
 The live ISO creates a `cinder` user with passwordless sudo for testing and installation. Root login is locked.
 
 Installed systems remove the live sudo rule and use normal privilege prompts.
+
+## Configuration & Customization
+
+**Key Configuration Files**:
+- `profiledef.sh` — ArchISO profile settings, boot modes, compression
+- `pacman.conf` — Build-time package manager config with multilib and CachyOS repos
+- `cinderos.project.json` — Project metadata (kernels, desktops, paths, etc.)
+- `docs/VOICE.md` — Writing guidelines for CinderOS documentation
+
+## Contributing
+
+Submit issues and pull requests via GitHub. Before contributing:
+- Review [docs/VOICE.md](docs/VOICE.md) for writing style
+- Run `bash scripts/release-check.sh` to validate changes
+- Test your changes in a VM before proposing production changes
+
+## License
+
+See [LICENSE](LICENSE) (if present) or the original ArchISO license terms.
+
+## Acknowledgments
+
+CinderOS is built on [Arch Linux](https://archlinux.org) and [ArchISO](https://gitlab.archlinux.org/archlinux/archiso). Special thanks to the COSMIC, Btrfs, PipeWire, and AppArmor communities.
