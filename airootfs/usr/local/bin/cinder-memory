@@ -22,8 +22,14 @@ need_root() {
   fi
 }
 
+begin_profile() {
+  mkdir -p /etc/sysctl.d
+  echo "# CinderOS active memory profile" > /etc/sysctl.d/99-cinderos-active-memory.conf
+}
+
 apply_sysctl() {
   sysctl -w "$1=$2" >/dev/null || true
+  echo "$1 = $2" >> /etc/sysctl.d/99-cinderos-active-memory.conf
 }
 
 start_zram() {
@@ -86,6 +92,7 @@ show_status() {
 
 low_idle() {
   need_root "$@"
+  begin_profile
   apply_sysctl vm.swappiness 120
   apply_sysctl vm.page-cluster 0
   apply_sysctl vm.vfs_cache_pressure 50
@@ -100,6 +107,7 @@ low_idle() {
 
 gaming() {
   need_root "$@"
+  begin_profile
   apply_sysctl vm.swappiness 100
   apply_sysctl vm.page-cluster 0
   apply_sysctl vm.vfs_cache_pressure 50
@@ -113,6 +121,7 @@ gaming() {
 
 dev() {
   need_root "$@"
+  begin_profile
   apply_sysctl vm.swappiness 120
   apply_sysctl vm.page-cluster 0
   apply_sysctl vm.vfs_cache_pressure 60

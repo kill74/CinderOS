@@ -25,9 +25,9 @@ else
 fi
 
 detect_graphics() {
-  hardware="$({ lspci 2>/dev/null || true; } | tr '[:upper:]' '[:lower:]')"
+  hardware="$({ lspci 2>/dev/null || true; } | grep -iE 'vga|3d|display' | tr '[:upper:]' '[:lower:]')"
 
-  if grep -Eq 'vga|3d|display' <<<"$hardware"; then
+  if [[ -n "$hardware" ]]; then
     grep -Eq 'amd|advanced micro devices|ati' <<<"$hardware" && has_amd=1
     grep -Eq 'intel' <<<"$hardware" && has_intel=1
     grep -Eq 'nvidia' <<<"$hardware" && has_nvidia=1

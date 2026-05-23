@@ -16,7 +16,7 @@ if grep -q "Exec=firejail" "$LOCAL_APPS_DIR/$APP" 2>/dev/null; then
     echo "$APP is already sandboxed in $LOCAL_APPS_DIR"
 else
     cp "$APPS_DIR/$APP" "$LOCAL_APPS_DIR/$APP"
-    sed -i 's/^Exec=/Exec=firejail /' "$LOCAL_APPS_DIR/$APP"
+    sed -i '0,/^Exec=/s/^Exec=/Exec=firejail /' "$LOCAL_APPS_DIR/$APP"
     echo "Sandboxed $APP!"
 fi
 sleep 3

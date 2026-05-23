@@ -36,12 +36,6 @@ systemctl disable grub-btrfsd.service btrfsmaintenance-refresh.path || true
 systemctl disable systemd-networkd.service || true
 systemctl mask systemd-rfkill.service systemd-rfkill.socket || true
 
-ufw default deny incoming || true
-ufw default allow outgoing || true
-ufw --force enable || true
-sysctl --system || true
-cinder-memory low-idle || true
-
 printf 'CinderOS live image customization complete.\n'
 
 if [ -d /root/custom_files ]; then

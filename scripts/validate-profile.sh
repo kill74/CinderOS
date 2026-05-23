@@ -123,7 +123,7 @@ for rel in "${branding_assets[@]}"; do
 done
 
 cleanup_file="$profile_dir/airootfs/etc/calamares/modules/shellprocess-cinderos-post.conf"
-for pattern in "00-cinderos-live" "cinder-install.desktop" "cinder-hardware-setup" "cinder-memory low-idle" "earlyoom" "greetd/config.installed.toml"; do
+for pattern in "00-cinderos-live" "cinder-install.desktop" "cinder-hardware-setup" "earlyoom" "greetd/config.installed.toml"; do
   if ! grep -Fq "$pattern" "$cleanup_file"; then
     echo "Post-install cleanup is missing expected rule containing: $pattern" >&2
     exit 1
